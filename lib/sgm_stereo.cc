@@ -15,8 +15,8 @@
 #   include <popcntintrin.h> // for hamming distance
 #endif
 
-#include "mve/depthmap.h"
-#include "mve/image_tools.h"
+#include "core/depthmap.h"
+#include "core/image_tools.h"
 #include "util/timer.h"
 
 #include "sgm_stereo.h"

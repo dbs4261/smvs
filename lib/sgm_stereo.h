@@ -10,7 +10,7 @@
 #ifndef SMVS_SGM_STEREO_HEADER
 #define SMVS_SGM_STEREO_HEADER
 
-#include "mve/image.h"
+#include "core/image.h"
 #include "util/aligned_memory.h"
 
 #include "stereo_view.h"

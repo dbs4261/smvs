@@ -9,10 +9,10 @@
 
 #include <iostream>
 
-#include "mve/depthmap.h"
-#include "mve/mesh_tools.h"
-#include "mve/mesh_info.h"
-#include "mve/mesh_io.h"
+#include "core/depthmap.h"
+#include "core/mesh_tools.h"
+#include "core/mesh_info.h"
+#include "core/mesh_io.h"
 
 #include "mesh_generator.h"
 #include "mesh_simplifier.h"

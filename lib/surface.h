@@ -12,8 +12,8 @@
 
 #include <vector>
 
-#include "mve/bundle.h"
-#include "mve/view.h"
+#include "core/bundle.h"
+#include "core/view.h"
 
 #include "bicubic_patch.h"
 #include "surface_patch.h"

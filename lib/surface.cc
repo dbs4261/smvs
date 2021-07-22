@@ -9,8 +9,8 @@
 
 #include <iostream>
 
-#include "mve/depthmap.h"
-#include "mve/image_io.h"
+#include "core/depthmap.h"
+#include "core/image_io.h"
 
 #include "surface.h"
 

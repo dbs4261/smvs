@@ -14,7 +14,7 @@
 #include <set>
 
 #include "math/vector.h"
-#include "mve/mesh.h"
+#include "core/mesh.h"
 
 #include "defines.h"
 #include "quad_edge.h"

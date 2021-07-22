@@ -12,7 +12,7 @@
 
 #include <vector>
 
-#include "mve/image.h"
+#include "core/image.h"
 
 #include "bicubic_patch.h"
 #include "defines.h"

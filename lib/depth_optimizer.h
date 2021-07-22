@@ -10,7 +10,7 @@
 #ifndef SMVS_DEPTH_OPTIMIZER_HEADER
 #define SMVS_DEPTH_OPTIMIZER_HEADER
 
-#include "mve/depthmap.h"
+#include "core/depthmap.h"
 
 #include "math/matrix.h"
 

@@ -13,9 +13,9 @@
 #include <vector>
 #include <map>
 
-#include "mve/image.h"
-#include "mve/camera.h"
-#include "mve/mesh.h"
+#include "core/image.h"
+#include "core/camera.h"
+#include "core/mesh.h"
 
 #include "defines.h"
 #include "delaunay_2d.h"

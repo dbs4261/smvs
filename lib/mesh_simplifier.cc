@@ -10,7 +10,7 @@
 #include <set>
 #include <iostream>
 
-#include "mve/mesh_tools.h"
+#include "core/mesh_tools.h"
 #include "math/matrix_tools.h"
 
 #include "mesh_simplifier.h"

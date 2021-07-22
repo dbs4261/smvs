@@ -12,8 +12,8 @@
 
 #include <queue>
 
-#include "mve/mesh.h"
-#include "mve/mesh_info.h"
+#include "core/mesh.h"
+#include "core/mesh_info.h"
 #include "math/matrix.h"
 
 #include "defines.h"

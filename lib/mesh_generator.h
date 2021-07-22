@@ -10,7 +10,7 @@
 #ifndef SMVS_MESH_GENERATOR_HEADER
 #define SMVS_MESH_GENERATOR_HEADER
 
-#include "mve/scene.h"
+#include "core/scene.h"
 
 #include "defines.h"
 #include "thread_pool.h"

@@ -10,7 +10,7 @@
 #ifndef SMVS_VIEW_SELECTION_HEADER
 #define SMVS_VIEW_SELECTION_HEADER
 
-#include "mve/scene.h"
+#include "core/scene.h"
 
 #include "defines.h"
 

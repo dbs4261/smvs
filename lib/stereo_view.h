@@ -10,9 +10,9 @@
 #ifndef SMVS_STEREO_VIEW_HEADER
 #define SMVS_STEREO_VIEW_HEADER
 
-#include "mve/view.h"
-#include "mve/bundle.h"
-#include "mve/depthmap.h"
+#include "core/view.h"
+#include "core/bundle.h"
+#include "core/depthmap.h"
 
 #include "defines.h"
 

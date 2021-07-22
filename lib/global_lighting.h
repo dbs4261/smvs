@@ -11,7 +11,7 @@
 #define SMVS_GLOBAL_LIGHTING_HEADER
 
 #include "math/vector.h"
-#include "mve/image.h"
+#include "core/image.h"
 
 #include "spherical_harmonics.h"
 #include "defines.h"

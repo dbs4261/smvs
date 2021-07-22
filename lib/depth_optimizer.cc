@@ -10,8 +10,8 @@
 #include <iostream>
 
 #include "util/timer.h"
-#include "mve/image_io.h"
-#include "mve/image_tools.h"
+#include "core/image_io.h"
+#include "core/image_tools.h"
 #include "math/matrix_svd.h"
 
 #include "depth_optimizer.h"

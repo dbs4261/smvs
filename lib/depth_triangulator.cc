@@ -7,10 +7,10 @@
  * of the BSD 3-Clause license. See the LICENSE.txt file for details.
  */
 
-#include "mve/depthmap.h"
-#include "mve/image_tools.h"
-#include "mve/mesh_io.h"
-#include "mve/mesh_tools.h"
+#include "core/depthmap.h"
+#include "core/image_tools.h"
+#include "core/mesh_io.h"
+#include "core/mesh_tools.h"
 
 #include "depth_triangulator.h"
 
