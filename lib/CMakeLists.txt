@@ -47,16 +47,38 @@ set(SMVS_PUBLIC_HEADERS
 add_library(smvs ${SMVS_SOURCES})
 add_library(smvs::lib ALIAS smvs)
 set_target_properties(smvs PROPERTIES
-    PUBLIC_HEADER "${SMVS_PUBLIC_HEADERS}"
-    EXPORT_NAME lib
+    EXPORT_NAME smvs
+    DEBUG_POSTFIX "_debug"
+    RELEASE_POSTFIX "_release"
+    RELWITHDEBINFO_POSTFIX "_relwithdebinfo"
+    VERSION "${ShadingAwareMVS_VERSION}"
+    SOVERSION "${ShadingAwareMVS_VERSION_MAJOR}"
+    INTERPROCEDURAL_OPTIMIZATION
+    $<AND:$<BOOL:${CMAKE_CXX_LTO_SUPPORTED}>, $<BOOL:${ENABLE_IPO}>, $<NOT:$<CONFIG:Debug>>>
+    WINDOWS_EXPORT_ALL_SYMBOLS ON
 )
-
+target_link_libraries(smvs
+    PUBLIC
+        mve::core Threads::Threads
+    PRIVATE
+        smvs::settings
+)
 target_include_directories(smvs PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/>
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/smvs/>
 )
-target_link_libraries(smvs PUBLIC mve::core Threads::Threads PRIVATE smvs::settings)
+
+target_compile_options(smvs PUBLIC
+    $<$<BOOL:${HAS_SSE41}>:-msse4.1>
+    $<$<BOOL:${HAS_POPCNT}>:-mpopcnt>
+)
 
 install(TARGETS smvs EXPORT smvs-targets
-    PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/smvs/
+    RUNTIME COMPONENT SMVS_Runtime
+    LIBRARY COMPONENT SMVS_Runtime NAMELINK_COMPONENT SMVS_Development
+    ARCHIVE COMPONENT SMVS_Development
+    )
+install(FILES ${MVE_CORE_PUBLIC_HEADER}
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/smvs/
+    COMPONENT SMVS_Development
 )
