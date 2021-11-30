@@ -10,10 +10,12 @@
 #ifndef SMVS_SPHERICAL_HARMONICS_HEADER
 #define SMVS_SPHERICAL_HARMONICS_HEADER
 
+#include "mve/math/defines.h"
+
 #include "defines.h"
 
-SMVS_NAMESPACE_BEGIN
-SPHERICAL_HARMONICS_NAMESPACE_BEGIN
+namespace smvs {
+namespace sh {
 
 /**
  * spherical harmonics with 9 coefficients for normal vector
@@ -200,7 +202,7 @@ derivative_4_band(T const* normal, T * sh_deriv)
     sh_deriv[47] = T(0.0);
 }
 
-SPHERICAL_HARMONICS_NAMESPACE_END
-SMVS_NAMESPACE_END
+} // namespace sh
+} // namespace smvs
 
 #endif /* SMVS_SPHERICAL_HARMONICS_HEADER */

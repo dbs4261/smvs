@@ -7,19 +7,21 @@
  * of the BSD 3-Clause license. See the LICENSE.txt file for details.
  */
 
+#include "mve/math/defines.h"
+
 #include "surface_patch.h"
 #include "surface_derivative.h"
 
-SMVS_NAMESPACE_BEGIN
+namespace smvs {
 
 void
-SurfacePatch::fill_depth_map (mve::FloatImage & image)
+SurfacePatch::fill_depth_map (mve::core::FloatImage & image)
 {
     if (this->patch == nullptr)
         this->patch = BicubicPatch::create(this->n00, this->n10,
             this->n01, this->n11);
 
-    std::vector<math::Vec2d> pixels;
+    std::vector<mve::math::Vec2d> pixels;
     std::vector<double> depths;
     this->fill_values_at_pixels(&pixels, &depths);
 
@@ -28,20 +30,20 @@ SurfacePatch::fill_depth_map (mve::FloatImage & image)
 }
 
 void
-SurfacePatch::fill_normal_map(mve::FloatImage & image, float inv_flen)
+SurfacePatch::fill_normal_map(mve::core::FloatImage & image, float inv_flen)
 {
     if (this->patch == nullptr)
         this->patch = BicubicPatch::create(this->n00, this->n10,
            this->n01, this->n11);
 
-    std::vector<math::Vec2d> pixels;
+    std::vector<mve::math::Vec2d> pixels;
     std::vector<double> depths;
-    std::vector<math::Vec2d> depth_derivatives;
+    std::vector<mve::math::Vec2d> depth_derivatives;
     this->fill_values_at_pixels(&pixels, &depths, & depth_derivatives);
 
     for (std::size_t i = 0; i < pixels.size(); ++i)
     {
-        math::Vec3d normal;
+        mve::math::Vec3d normal;
         double x = pixels[i][0] + 0.5 -
             static_cast<double>(image.width()) / 2.0;
         double y = pixels[i][1] + 0.5 -
@@ -55,9 +57,9 @@ SurfacePatch::fill_normal_map(mve::FloatImage & image, float inv_flen)
 }
 
 void
-SurfacePatch::fill_values_at_pixels(std::vector<math::Vec2d> * pixels,
-    std::vector<double> * depths, std::vector<math::Vec2d> * first_deriv,
-    std::vector<math::Vec3d> * second_deriv,
+SurfacePatch::fill_values_at_pixels(std::vector<mve::math::Vec2d> * pixels,
+    std::vector<double> * depths, std::vector<mve::math::Vec2d> * first_deriv,
+    std::vector<mve::math::Vec3d> * second_deriv,
     std::vector<std::size_t> * pids,
     int subsample)
 {
@@ -120,8 +122,8 @@ SurfacePatch::fill_values_at_pixels(std::vector<math::Vec2d> * pixels,
 }
 
 void
-SurfacePatch::fill_values_at_nodes (std::vector<math::Vec2d> * pixels,
-    std::vector<double> * depths, std::vector<math::Vec2d> * first_deriv,
+SurfacePatch::fill_values_at_nodes (std::vector<mve::math::Vec2d> * pixels,
+    std::vector<double> * depths, std::vector<mve::math::Vec2d> * first_deriv,
     std::vector<double> * second_deriv)
 {
     if  (pixels != nullptr)
@@ -168,4 +170,4 @@ SurfacePatch::fill_values_at_nodes (std::vector<math::Vec2d> * pixels,
     }
 }
 
-SMVS_NAMESPACE_END
+} // namespace smvs

@@ -9,25 +9,25 @@
 
 #include <iostream>
 
-#include "core/depthmap.h"
-#include "core/mesh_tools.h"
-#include "core/mesh_info.h"
-#include "core/mesh_io.h"
+#include "mve/core/depthmap.h"
+#include "mve/core/mesh_tools.h"
+#include "mve/core/mesh_info.h"
+#include "mve/core/mesh_io.h"
 
 #include "mesh_generator.h"
 #include "mesh_simplifier.h"
 #include "depth_triangulator.h"
 
-SMVS_NAMESPACE_BEGIN
+namespace smvs {
 
 /* WIP */
 void
-MeshGenerator::cut_depth_maps(std::vector<mve::FloatImage::Ptr> * depthmaps,
-    std::vector<mve::FloatImage::Ptr> * normalmaps)
+MeshGenerator::cut_depth_maps(std::vector<mve::core::FloatImage::Ptr> * depthmaps,
+    std::vector<mve::core::FloatImage::Ptr> * normalmaps)
 {
     std::vector<std::future<void>> results;
-    std::vector<mve::FloatImage::Ptr> cutmaps(depthmaps->size());
-    std::vector<mve::FloatImage::Ptr> cutmaps_j(depthmaps->size());
+    std::vector<mve::core::FloatImage::Ptr> cutmaps(depthmaps->size());
+    std::vector<mve::core::FloatImage::Ptr> cutmaps_j(depthmaps->size());
 
     for (std::size_t i = 0; i < this->views.size(); ++i)
     results.emplace_back(this->thread_pool.add_task(
@@ -37,21 +37,21 @@ MeshGenerator::cut_depth_maps(std::vector<mve::FloatImage::Ptr> * depthmaps,
             return;
         cutmaps[i] = depthmaps->at(i)->duplicate();
 
-        math::Matrix3f invproj;
+        mve::math::Matrix3f invproj;
         this->views[i]->get_camera().fill_inverse_calibration(
             *invproj, depthmaps->at(i)->width(), depthmaps->at(i)->height());
-        mve::image::depthmap_convert_conventions<float>(depthmaps->at(i),
+        mve::core::image::depthmap_convert_conventions<float>(depthmaps->at(i),
             invproj, false);
         cutmaps_j[i] = cutmaps[i]->duplicate();
     }));
     for(auto && result: results) result.get();
     results.clear();
 
-    std::vector<math::Matrix4f> ctws(this->views.size());
-    std::vector<math::Matrix3f> invprojs(this->views.size());
+    std::vector<mve::math::Matrix4f> ctws(this->views.size());
+    std::vector<mve::math::Matrix3f> invprojs(this->views.size());
     for (std::size_t i = 0; i < this->views.size(); ++i)
     {
-        mve::View::Ptr view = this->views[i];
+        mve::core::View::Ptr view = this->views[i];
         view->get_camera().fill_cam_to_world(*ctws[i]);
         view->get_camera().fill_inverse_calibration(*invprojs[i],
             depthmaps->at(i)->width(), depthmaps->at(i)->height());
@@ -62,13 +62,13 @@ MeshGenerator::cut_depth_maps(std::vector<mve::FloatImage::Ptr> * depthmaps,
         [i, this, &depthmaps, &normalmaps, &cutmaps, &cutmaps_j,
          &ctws, &invprojs]
     {
-        mve::View::Ptr view = this->views[i];
-        mve::FloatImage::Ptr depth = depthmaps->at(i);
-        mve::FloatImage::Ptr normals = normalmaps->at(i);
-        mve::FloatImage::Ptr cutmap = cutmaps[i];
+        mve::core::View::Ptr view = this->views[i];
+        mve::core::FloatImage::Ptr depth = depthmaps->at(i);
+        mve::core::FloatImage::Ptr normals = normalmaps->at(i);
+        mve::core::FloatImage::Ptr cutmap = cutmaps[i];
 
-        math::Matrix4f const& ctw = ctws[i];
-        math::Matrix3f const& invproj = invprojs[i];
+        mve::math::Matrix4f const& ctw = ctws[i];
+        mve::math::Matrix3f const& invproj = invprojs[i];
 
         for (int x = 0; x < depth->width(); ++x)
             for (int y = 0; y < depth->height(); ++y)
@@ -78,10 +78,10 @@ MeshGenerator::cut_depth_maps(std::vector<mve::FloatImage::Ptr> * depthmaps,
                     continue;
 
                 /* generate 3D point */
-                math::Vec3f pos = mve::geom::pixel_3dpos(x, y, d, invproj);
+                mve::math::Vec3f pos = mve::core::geom::pixel_3dpos(x, y, d, invproj);
                 pos = ctw.mult(pos, 1.0);
                 /* get normal */
-                math::Vec3f normal(normals->at(x, y, 0), normals->at(x, y, 1),
+                mve::math::Vec3f normal(normals->at(x, y, 0), normals->at(x, y, 1),
                     normals->at(x, y, 2));
 
                 float surface_power = this->view_projs[i].get_surface_power(
@@ -96,11 +96,11 @@ MeshGenerator::cut_depth_maps(std::vector<mve::FloatImage::Ptr> * depthmaps,
                 {
                     if (j == i)
                         continue;
-                    mve::FloatImage::ConstPtr normals_j = normalmaps->at(j);
-                    math::Matrix4f const& ctw_j = ctws[j];
-                    math::Matrix3f const& invproj_j = invprojs[j];
+                    mve::core::FloatImage::ConstPtr normals_j = normalmaps->at(j);
+                    mve::math::Matrix4f const& ctw_j = ctws[j];
+                    mve::math::Matrix3f const& invproj_j = invprojs[j];
 
-                    math::Vec3f proj = this->view_projs[j].get_proj(pos);
+                    mve::math::Vec3f proj = this->view_projs[j].get_proj(pos);
                     if (proj[2] < 0)
                         continue;
                     int xj = static_cast<int>(proj[0] / proj[2]);
@@ -117,10 +117,10 @@ MeshGenerator::cut_depth_maps(std::vector<mve::FloatImage::Ptr> * depthmaps,
                         this->view_projs[j].get_surface_power(pos, normal);
 
                     /* generate 3D point in neighbor view */
-                    math::Vec3f pos_j = mve::geom::pixel_3dpos(xj, yj,
+                    mve::math::Vec3f pos_j = mve::core::geom::pixel_3dpos(xj, yj,
                            cutmaps_j[j]->at(xj, yj, 0), invproj_j);
                     pos_j = ctw_j.mult(pos_j, 1.0);
-                    math::Vec3f normal_j(normals_j->at(xj, yj, 0),
+                    mve::math::Vec3f normal_j(normals_j->at(xj, yj, 0),
                         normals_j->at(xj, yj, 1), normals_j->at(xj, yj, 2));
                     float surface_power_j_j =
                         this->view_projs[j].get_surface_power(pos_j, normal_j);
@@ -157,8 +157,8 @@ MeshGenerator::cut_depth_maps(std::vector<mve::FloatImage::Ptr> * depthmaps,
     }
 }
 
-mve::TriangleMesh::Ptr
-MeshGenerator::generate_mesh (mve::Scene::ViewList const& inputviews,
+mve::core::TriangleMesh::Ptr
+MeshGenerator::generate_mesh (mve::core::Scene::ViewList const& inputviews,
     std::string const& image_name, std::string const& dm_name)
 {
     /* Look only for valid views with image, depth, and normals */
@@ -166,22 +166,22 @@ MeshGenerator::generate_mesh (mve::Scene::ViewList const& inputviews,
     std::vector<std::size_t> valid_views;
     for (std::size_t i = 0; i < inputviews.size(); ++i)
     {
-        mve::View::Ptr view = inputviews[i];
+        mve::core::View::Ptr view = inputviews[i];
         if (view == nullptr)
             continue;
         if (!view->has_image(dm_name) || !view->has_image(nm_name) ||
             !view->has_image(image_name))
             continue;
 
-        mve::View::ImageProxy const* proxy = view->get_image_proxy(dm_name);
+        mve::core::View::ImageProxy const* proxy = view->get_image_proxy(dm_name);
         this->view_projs.emplace_back(view->get_camera(),
             proxy->width, proxy->height);
         this->views.push_back(view);
     }
 
     /* Get depth and normals and transform normals to world space */
-    std::vector<mve::FloatImage::Ptr> depthmaps(this->views.size());
-    std::vector<mve::FloatImage::Ptr> normalmaps(this->views.size());
+    std::vector<mve::core::FloatImage::Ptr> depthmaps(this->views.size());
+    std::vector<mve::core::FloatImage::Ptr> normalmaps(this->views.size());
     std::vector<std::future<void>> load_and_convert;
     for (std::size_t i = 0; i < normalmaps.size(); ++i)
     load_and_convert.emplace_back(this->thread_pool.add_task(
@@ -189,12 +189,12 @@ MeshGenerator::generate_mesh (mve::Scene::ViewList const& inputviews,
     {
         depthmaps[i] = this->views[i]->get_float_image(dm_name)->duplicate();
         normalmaps[i] = this->views[i]->get_float_image(nm_name)->duplicate();
-        mve::FloatImage::Ptr normals = normalmaps[i];
-        math::Matrix3f rot;
+        mve::core::FloatImage::Ptr normals = normalmaps[i];
+        mve::math::Matrix3f rot;
         this->views[i]->get_camera().fill_cam_to_world_rot(*rot);
         for (int i = 0; i < normals->get_pixel_amount(); ++i)
         {
-            math::Vec3f normal(normals->at(i, 0), -normals->at(i, 1),
+            mve::math::Vec3f normal(normals->at(i, 0), -normals->at(i, 1),
                 -normals->at(i, 2));
             normal = rot * normal;
             normals->at(i, 0) = normal[0];
@@ -210,7 +210,7 @@ MeshGenerator::generate_mesh (mve::Scene::ViewList const& inputviews,
 
     /* Prepare output mesh. */
     std::vector<std::future<void>> merge_depth;
-    mve::TriangleMesh::Ptr pset(mve::TriangleMesh::create());
+    mve::core::TriangleMesh::Ptr pset(mve::core::TriangleMesh::create());
     std::mutex mesh_mutex;
     for (std::size_t i = 0; i < this->views.size(); ++i)
     merge_depth.emplace_back(this->thread_pool.add_task(
@@ -225,47 +225,47 @@ MeshGenerator::generate_mesh (mve::Scene::ViewList const& inputviews,
             this->views[i]->save_view();
         }
 
-        mve::TriangleMesh::VertexList& verts(pset->get_vertices());
-        mve::TriangleMesh::NormalList& vnorm(pset->get_vertex_normals());
-        mve::TriangleMesh::ColorList& vcolor(pset->get_vertex_colors());
-        mve::TriangleMesh::ValueList& vvalues(pset->get_vertex_values());
-        mve::TriangleMesh::ConfidenceList& vconfs(
+        mve::core::TriangleMesh::VertexList& verts(pset->get_vertices());
+        mve::core::TriangleMesh::NormalList& vnorm(pset->get_vertex_normals());
+        mve::core::TriangleMesh::ColorList& vcolor(pset->get_vertex_colors());
+        mve::core::TriangleMesh::ValueList& vvalues(pset->get_vertex_values());
+        mve::core::TriangleMesh::ConfidenceList& vconfs(
             pset->get_vertex_confidences());
 
-        mve::FloatImage::Ptr normals = normalmaps[i];
-        mve::ByteImage::Ptr color = this->views[i]->get_byte_image(image_name);
+        mve::core::FloatImage::Ptr normals = normalmaps[i];
+        mve::core::ByteImage::Ptr color = this->views[i]->get_byte_image(image_name);
 
         DepthTriangulator dt(depthmaps[i], this->views[i]->get_camera(), color);
-        mve::TriangleMesh::Ptr m;
+        mve::core::TriangleMesh::Ptr m;
         if (this->opts.simplify)
             m = dt.approximate_triangulation();
         else
             m = dt.full_triangulation();
 
-        mve::TriangleMesh::VertexList const& mverts(m->get_vertices());
-        mve::TriangleMesh::ColorList const& mvcol(m->get_vertex_colors());
-        mve::TriangleMesh::ConfidenceList& mconfs(m->get_vertex_confidences());
+        mve::core::TriangleMesh::VertexList const& mverts(m->get_vertices());
+        mve::core::TriangleMesh::ColorList const& mvcol(m->get_vertex_colors());
+        mve::core::TriangleMesh::ConfidenceList& mconfs(m->get_vertex_confidences());
 
         /* Per-vertex confidence down-weighting boundaries. */
-        mve::geom::depthmap_mesh_confidences(m, 4);
+        mve::core::geom::depthmap_mesh_confidences(m, 4);
 
         std::vector<float> mvscale;
         mvscale.resize(mverts.size(), 0.0f);
-        mve::MeshInfo mesh_info(m);
+        mve::core::MeshInfo mesh_info(m);
         for (std::size_t j = 0; j < mesh_info.size(); ++j)
         {
-            mve::MeshInfo::VertexInfo const& vinf = mesh_info[j];
+            mve::core::MeshInfo::VertexInfo const& vinf = mesh_info[j];
             for (std::size_t k = 0; k < vinf.verts.size(); ++k)
                 mvscale[j] += (mverts[j] - mverts[vinf.verts[k]]).norm();
             mvscale[j] /= static_cast<float>(vinf.verts.size());
             mvscale[j] *= 2.0f;
         }
 
-        mve::TriangleMesh::NormalList smvsnormals;
+        mve::core::TriangleMesh::NormalList smvsnormals;
         smvsnormals.resize(mverts.size());
         for (std::size_t v = 0; v < mverts.size(); ++v)
         {
-            math::Vec3f proj = this->view_projs[i].get_proj(mverts[v]);
+            mve::math::Vec3f proj = this->view_projs[i].get_proj(mverts[v]);
             int x = static_cast<int>(proj[0] /proj[2]);
             int y = static_cast<int>(proj[1] /proj[2]);
             if (x < 0 || x > normals->width() - 1
@@ -279,7 +279,7 @@ MeshGenerator::generate_mesh (mve::Scene::ViewList const& inputviews,
         std::unique_lock<std::mutex> mesh_lock(mesh_mutex);
         if (this->opts.create_triangle_mesh)
         {
-            mve::geom::mesh_merge(m, pset);
+            mve::core::geom::mesh_merge(m, pset);
         }
         else
         {
@@ -299,10 +299,10 @@ MeshGenerator::generate_mesh (mve::Scene::ViewList const& inputviews,
 }
 
 
-MeshGenerator::ViewProjection::ViewProjection (mve::CameraInfo const& camera,
+MeshGenerator::ViewProjection::ViewProjection (mve::core::CameraInfo const& camera,
     int width, int height)
 {
-    math::Matrix3f K, R;
+    mve::math::Matrix3f K, R;
     camera.fill_calibration(*K, width, height);
     camera.fill_world_to_cam_rot(*R);
 
@@ -311,20 +311,20 @@ MeshGenerator::ViewProjection::ViewProjection (mve::CameraInfo const& camera,
     t = KR * t;
 }
 
-math::Vec3f
-MeshGenerator::ViewProjection::ViewProjection::get_proj (math::Vec3f pos) const
+mve::math::Vec3f
+MeshGenerator::ViewProjection::ViewProjection::get_proj (mve::math::Vec3f pos) const
 {
     float u = KR.row(0).dot(pos) - t[0];
     float v = KR.row(1).dot(pos) - t[1];
     float w = KR.row(2).dot(pos) - t[2];
-    return math::Vec3f(u, v, w);
+    return mve::math::Vec3f(u, v, w);
 }
 
 float
 MeshGenerator::ViewProjection::ViewProjection::get_surface_power (
-    math::Vec3f const& pos, math::Vec3f const& normal)
+    mve::math::Vec3f const& pos, mve::math::Vec3f const& normal)
 {
-    math::Vec3f u_dx, v_dx;
+    mve::math::Vec3f u_dx, v_dx;
     float u = KR.row(0).dot(pos) - t[0];
     float v = KR.row(1).dot(pos) - t[1];
     float w = KR.row(2).dot(pos) - t[2];
@@ -343,4 +343,4 @@ MeshGenerator::ViewProjection::ViewProjection::get_surface_power (
     return power;
 }
 
-SMVS_NAMESPACE_END
+} // namespace smvs

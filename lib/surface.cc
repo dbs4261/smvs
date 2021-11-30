@@ -9,15 +9,15 @@
 
 #include <iostream>
 
-#include "core/depthmap.h"
-#include "core/image_io.h"
+#include "mve/core/depthmap.h"
+#include "mve/core/image_io.h"
 
 #include "surface.h"
 
-SMVS_NAMESPACE_BEGIN
+namespace smvs {
 
-Surface::Surface (mve::Bundle::ConstPtr bundle, StereoView::Ptr main_view,
-    int scale, mve::FloatImage::ConstPtr init_depth)
+Surface::Surface (mve::core::Bundle::ConstPtr bundle, StereoView::Ptr main_view,
+    int scale, mve::core::FloatImage::ConstPtr init_depth)
     : pixel_width(main_view->get_width())
     , pixel_height(main_view->get_height())
     , scale(scale)
@@ -36,7 +36,7 @@ Surface::Surface (mve::Bundle::ConstPtr bundle, StereoView::Ptr main_view,
     this->pixel_start_x = (width - num_patches_x * this->patchsize) / 2;
     this->pixel_start_y = (height - num_patches_y * this->patchsize) / 2;
 
-    this->depth = mve::FloatImage::create(width, height, 1);
+    this->depth = mve::core::FloatImage::create(width, height, 1);
     this->depth->fill(0.0f);
 
     /* Initialize depth using sparse SfM points */
@@ -58,7 +58,7 @@ Surface::initialize_planar (double depth)
     int const width = this->pixel_width;
     int const height = this->pixel_height;
 
-    this->depth = mve::FloatImage::create(width, height, 1);
+    this->depth = mve::core::FloatImage::create(width, height, 1);
     this->patchsize = 1 << this->scale;
     this->num_patches_x = (width - 2) / this->patchsize;
     this->num_patches_y = (height - 2) / this->patchsize;
@@ -88,31 +88,31 @@ Surface::initialize_planar (double depth)
 }
 
 void
-Surface::initialize_depth_from_bundle(mve::Bundle::ConstPtr bundle,
-    const mve::CameraInfo &cam, int view_id)
+Surface::initialize_depth_from_bundle(mve::core::Bundle::ConstPtr bundle,
+    const mve::core::CameraInfo &cam, int view_id)
 {
     int const width = this->pixel_width;
     int const height = this->pixel_height;
 
-    this->depth = mve::FloatImage::create(width, height, 1);
+    this->depth = mve::core::FloatImage::create(width, height, 1);
 
-    math::Matrix3f rot(cam.rot);
-    math::Vec3f trans(cam.trans);
+    mve::math::Matrix3f rot(cam.rot);
+    mve::math::Vec3f trans(cam.trans);
     float flen = cam.flen;
 
     double const fwidth2 = static_cast<double>(width) / 2.0;
     double const fheight2 = static_cast<double>(height) / 2.0;
     double const fnorm = static_cast<double>(std::max(width, height));
 
-    mve::Bundle::Features const& features = bundle->get_features();
+    mve::core::Bundle::Features const& features = bundle->get_features();
     for (std::size_t j = 0; j < features.size(); ++j)
     {
-        mve::Bundle::Feature3D const& feat = features[j];
+        mve::core::Bundle::Feature3D const& feat = features[j];
         for (std::size_t k = 0; k < feat.refs.size(); ++k)
             if (feat.refs[k].view_id == view_id)
             {
-                math::Vec3f fpos(feat.pos);
-                math::Vec3f proj = rot * fpos + trans;
+                mve::math::Vec3f fpos(feat.pos);
+                mve::math::Vec3f proj = rot * fpos + trans;
                 float const depth = proj[2];
                 proj[0] = proj[0] * flen / proj[2];
                 proj[1] = proj[1] * flen / proj[2];
@@ -130,8 +130,8 @@ Surface::initialize_depth_from_bundle(mve::Bundle::ConstPtr bundle,
 }
 
 void
-Surface::fill_patches_from_bundle(mve::Bundle::ConstPtr bundle,
-    const mve::CameraInfo &cam, int view_id)
+Surface::fill_patches_from_bundle(mve::core::Bundle::ConstPtr bundle,
+    const mve::core::CameraInfo &cam, int view_id)
 {
     this->initialize_depth_from_bundle(bundle, cam, view_id);
     this->fill_patches_from_depth();
@@ -152,10 +152,10 @@ Surface::fill_patches_from_depth (void)
 }
 
 
-mve::FloatImage::Ptr
+mve::core::FloatImage::Ptr
 Surface::get_depth_map (void)
 {
-    mve::FloatImage::Ptr dmap = this->return_depth;
+    mve::core::FloatImage::Ptr dmap = this->return_depth;
     dmap->fill(0.0);
     for (std::size_t i = 0; i < num_patches_x; ++i)
         for (std::size_t j = 0; j < num_patches_y; ++j)
@@ -167,10 +167,10 @@ Surface::get_depth_map (void)
     return dmap;
 }
 
-mve::FloatImage::Ptr
+mve::core::FloatImage::Ptr
 Surface::get_normal_map (float inv_flen)
 {
-    mve::FloatImage::Ptr normals =  mve::FloatImage::create(
+    mve::core::FloatImage::Ptr normals =  mve::core::FloatImage::create(
         this->depth->width(), this->depth->height(), 3);
     for (std::size_t i = 0; i < num_patches_x; ++i)
         for (std::size_t j = 0; j < num_patches_y; ++j)
@@ -651,7 +651,7 @@ Surface::fill_holes (void)
 }
 
 void
-Surface::fill_node_coords(std::vector<math::Vec2d> * coords)
+Surface::fill_node_coords(std::vector<mve::math::Vec2d> * coords)
 {
     coords->clear();
     for (std::size_t i = 0; i < this->nodes.size(); ++i)
@@ -1106,4 +1106,4 @@ Surface::subdivide_patches (void)
     this->remove_nodes_without_patch();
 }
 
-SMVS_NAMESPACE_END
+} // namespace smvs

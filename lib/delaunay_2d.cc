@@ -11,19 +11,19 @@
 
 #include "delaunay_2d.h"
 
-SMVS_NAMESPACE_BEGIN
+namespace smvs {
 
 /* ----------------------- Geometric Tools ------------------------ */
 namespace
 {
-    double triangle_area(math::Vec2d const& a, math::Vec2d const& b,
-        math::Vec2d const& c)
+    double triangle_area(mve::math::Vec2d const& a, mve::math::Vec2d const& b,
+        mve::math::Vec2d const& c)
     {
         return (b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0]);
     }
 
-    bool in_circle(math::Vec2d const& a, math::Vec2d const& b,
-        math::Vec2d const& c, math::Vec2d const& p)
+    bool in_circle(mve::math::Vec2d const& a, mve::math::Vec2d const& b,
+        mve::math::Vec2d const& c, mve::math::Vec2d const& p)
     {
         return (a.square_norm() * triangle_area(b, c, p) -
             b.square_norm() * triangle_area(a, c, p) +
@@ -31,19 +31,19 @@ namespace
             p.square_norm() * triangle_area(a, b, c)) > 0;
     }
 
-    int ccw(math::Vec2d const& a, math::Vec2d const& b, math::Vec2d const& c)
+    int ccw(mve::math::Vec2d const& a, mve::math::Vec2d const& b, mve::math::Vec2d const& c)
     {
         return (triangle_area(a, b, c) > 0);
     }
 
-    int right_of(math::Vec2d const& p, math::Vec2d const& orig,
-        math::Vec2d const& dest)
+    int right_of(mve::math::Vec2d const& p, mve::math::Vec2d const& orig,
+        mve::math::Vec2d const& dest)
     {
         return ccw(p, dest, orig);
     }
 
-    bool on_edge(math::Vec2d const& p, math::Vec2d const& orig,
-        math::Vec2d const& dest)
+    bool on_edge(mve::math::Vec2d const& p, mve::math::Vec2d const& orig,
+        mve::math::Vec2d const& dest)
     {
         double const eps = 1e-5;
         double t1 = (p - orig).norm();
@@ -117,10 +117,10 @@ Delaunay2D::delete_edge (Edge::Ptr e)
 }
 
 /* -------------------- Triangle Manipulation --------------------- */
-math::Vec3ui
+mve::math::Vec3ui
 Delaunay2D::Triangle::get_vertices (void) const
 {
-    math::Vec3ui verts;
+    mve::math::Vec3ui verts;
     Edge::Ptr edge = this->start;
     for (int v = 0; v < 3; ++v)
     {
@@ -134,32 +134,32 @@ void
 Delaunay2D::fill_triangle_vertices (std::size_t triangle,
     double * vertices) const
 {
-    math::Vec3ui vertex_ids = this->triangles[triangle].get_vertices();
+    mve::math::Vec3ui vertex_ids = this->triangles[triangle].get_vertices();
     for (int i = 0; i < 9; ++i)
         vertices[i] = this->vertices[vertex_ids[i / 3]][i % 3];
 }
 
 /* ------------------------ Delaunay Main ------------------------- */
-Delaunay2D::Delaunay2D(math::Vec2d min, math::Vec2d max, double z)
+Delaunay2D::Delaunay2D(mve::math::Vec2d min, mve::math::Vec2d max, double z)
 
 {
-    math::Vec3d bot_left(min[0], min[1], z);
-    math::Vec3d bot_right(max[0], min[1], z);
-    math::Vec3d top_left(min[0], max[1], z);
-    math::Vec3d top_right(max[0], max[1], z);
+    mve::math::Vec3d bot_left(min[0], min[1], z);
+    mve::math::Vec3d bot_right(max[0], min[1], z);
+    mve::math::Vec3d top_left(min[0], max[1], z);
+    mve::math::Vec3d top_right(max[0], max[1], z);
     this->initialize(bot_left, bot_right, top_left, top_right);
 }
 
-Delaunay2D::Delaunay2D(math::Vec3d p1, math::Vec3d p2, math::Vec3d p3,
-    math::Vec3d p4)
+Delaunay2D::Delaunay2D(mve::math::Vec3d p1, mve::math::Vec3d p2, mve::math::Vec3d p3,
+    mve::math::Vec3d p4)
 
 {
     this->initialize(p1, p2, p3, p4);
 }
 
 void
-Delaunay2D::initialize(math::Vec3d p1, math::Vec3d p2, math::Vec3d p3,
-    math::Vec3d p4)
+Delaunay2D::initialize(mve::math::Vec3d p1, mve::math::Vec3d p2, mve::math::Vec3d p3,
+    mve::math::Vec3d p4)
 {
     this->vertices.push_back(p1);
     this->vertices.push_back(p2);
@@ -198,7 +198,7 @@ Delaunay2D::initialize(math::Vec3d p1, math::Vec3d p2, math::Vec3d p3,
 }
 
 Edge::Ptr
-Delaunay2D::locate(math::Vec2d const& p, Edge::Ptr start_edge)
+Delaunay2D::locate(mve::math::Vec2d const& p, Edge::Ptr start_edge)
 {
     Edge::Ptr e = start_edge;
     while (true)
@@ -222,10 +222,10 @@ Delaunay2D::locate(math::Vec2d const& p, Edge::Ptr start_edge)
 }
 
 void
-Delaunay2D::insert_point(math::Vec3d const& p3d, std::size_t triangle)
+Delaunay2D::insert_point(mve::math::Vec3d const& p3d, std::size_t triangle)
 {
     this->recently_changed.clear();
-    math::Vec2d p(p3d[0], p3d[1]);
+    mve::math::Vec2d p(p3d[0], p3d[1]);
     Edge::Ptr e;
     if (triangle == std::size_t(-1))
         e = this->locate(p, this->start);
@@ -290,22 +290,22 @@ Delaunay2D::insert_point(math::Vec3d const& p3d, std::size_t triangle)
 
 }
 
-mve::TriangleMesh::Ptr
+mve::core::TriangleMesh::Ptr
 Delaunay2D::get_mesh (void) const
 {
-    mve::TriangleMesh::Ptr mesh = mve::TriangleMesh::create();
+    mve::core::TriangleMesh::Ptr mesh = mve::core::TriangleMesh::create();
 
-    mve::TriangleMesh::VertexList & verts = mesh->get_vertices();
+    mve::core::TriangleMesh::VertexList & verts = mesh->get_vertices();
     verts.clear();
     verts.reserve(this->vertices.size());
     for (auto v : this->vertices)
         verts.push_back(v);
 
-    mve::TriangleMesh::FaceList & faces = mesh->get_faces();
+    mve::core::TriangleMesh::FaceList & faces = mesh->get_faces();
     faces.reserve(this->triangles.size() * 3);
     for (auto & T : this->triangles)
     {
-        math::Vec3ui verts = T.get_vertices();
+        mve::math::Vec3ui verts = T.get_vertices();
         faces.push_back(verts[0]);
         faces.push_back(verts[1]);
         faces.push_back(verts[2]);
@@ -314,4 +314,4 @@ Delaunay2D::get_mesh (void) const
     return mesh;
 }
 
-SMVS_NAMESPACE_END
+} // namespace smvs

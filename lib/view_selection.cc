@@ -9,9 +9,9 @@
 
 #include "view_selection.h"
 
-SMVS_NAMESPACE_BEGIN
+namespace smvs {
 
-mve::Scene::ViewList
+mve::core::Scene::ViewList
 ViewSelection::get_neighbors_for_view (std::size_t const view) const
 {
     if (this->bundle != nullptr)
@@ -20,31 +20,31 @@ ViewSelection::get_neighbors_for_view (std::size_t const view) const
         return this->position_based_selection(view);
 }
 
-mve::Scene::ViewList
+mve::core::Scene::ViewList
 ViewSelection::bundle_based_selection (std::size_t const view) const
 {
-    mve::Scene::ViewList neighbors;
-    mve::View::Ptr main_view = this->views[view];
+    mve::core::Scene::ViewList neighbors;
+    mve::core::View::Ptr main_view = this->views[view];
     if (!main_view->has_image(this->opts.embedding))
         return neighbors;
 
-    math::Matrix4f main_view_wtc;
-    math::Matrix3f main_view_iproj;
+    mve::math::Matrix4f main_view_wtc;
+    mve::math::Matrix3f main_view_iproj;
     main_view->get_camera().fill_world_to_cam(*main_view_wtc);
     main_view->get_camera().fill_inverse_calibration(*main_view_iproj,
         main_view->get_image_proxy(this->opts.embedding)->width,
         main_view->get_image_proxy(this->opts.embedding)->height);
 
-    mve::Bundle::Features const& features = this->bundle->get_features();
+    mve::core::Bundle::Features const& features = this->bundle->get_features();
 
     /* Create list of features for main view */
-    mve::Bundle::Features main_view_features;
+    mve::core::Bundle::Features main_view_features;
     std::vector<float> main_view_footprints;
     for (std::size_t f = 0; f < features.size(); ++f)
         if (features[f].contains_view_id(main_view->get_id()))
         {
             main_view_features.push_back(features[f]);
-            math::Vec3f pos(features[f].pos);
+            mve::math::Vec3f pos(features[f].pos);
             main_view_footprints.push_back(main_view_wtc.mult(pos, 1)[2] *
                 main_view_iproj[0]);
         }
@@ -55,13 +55,13 @@ ViewSelection::bundle_based_selection (std::size_t const view) const
         std::greater<std::size_t>> common_features_map;
     for (std::size_t i = 0; i < neighbors.size() && i < 50; ++i)
     {
-        mve::View::Ptr v = neighbors[i];
+        mve::core::View::Ptr v = neighbors[i];
         std::size_t id = v->get_id();
         if (id == view || v == nullptr || v->get_camera().flen == 0.0
             || !v->has_image(this->opts.embedding))
             continue;
-        math::Matrix4f neighbor_view_wtc;
-        math::Matrix3f neighbor_view_iproj;
+        mve::math::Matrix4f neighbor_view_wtc;
+        mve::math::Matrix3f neighbor_view_iproj;
         v->get_camera().fill_world_to_cam(*neighbor_view_wtc);
         v->get_camera().fill_inverse_calibration(*neighbor_view_iproj,
             v->get_image_proxy(this->opts.embedding)->width,
@@ -72,7 +72,7 @@ ViewSelection::bundle_based_selection (std::size_t const view) const
         {
             if (main_view_features[f].contains_view_id(v->get_id()))
             {
-                math::Vec3f pos(main_view_features[f].pos);
+                mve::math::Vec3f pos(main_view_features[f].pos);
                 float neighbor_footprint = neighbor_view_wtc.mult(pos, 1)[2] *
                     neighbor_view_iproj[0];
                 if (std::min(neighbor_footprint, main_view_footprints[f]) /
@@ -95,16 +95,16 @@ ViewSelection::bundle_based_selection (std::size_t const view) const
     return neighbors;
 }
 
-mve::Scene::ViewList
+mve::core::Scene::ViewList
 ViewSelection::position_based_selection (std::size_t const view) const
 {
-    mve::Scene::ViewList neighbors;
+    mve::core::Scene::ViewList neighbors;
 
-    mve::View::ConstPtr main_view = this->views[view];
-    mve::CameraInfo const& main_cam = main_view->get_camera();
-    math::Vec3f main_cam_dir;
+    mve::core::View::ConstPtr main_view = this->views[view];
+    mve::core::CameraInfo const& main_cam = main_view->get_camera();
+    mve::math::Vec3f main_cam_dir;
     main_cam.fill_viewing_direction(*main_cam_dir);
-    math::Vec3f main_cam_up;
+    mve::math::Vec3f main_cam_up;
     main_cam_up[0] = main_cam.rot[2];
     main_cam_up[1] = main_cam.rot[5];
     main_cam_up[2] = main_cam.rot[8];
@@ -112,12 +112,12 @@ ViewSelection::position_based_selection (std::size_t const view) const
     neighbors = this->get_sorted_neighbors(view);
     for (auto n = neighbors.begin(); n != neighbors.end();)
     {
-        mve::CameraInfo const& cam = (*n)->get_camera();
+        mve::core::CameraInfo const& cam = (*n)->get_camera();
         if (cam.flen == 0.0)
             continue;
-        math::Vec3f sub_cam_dir;
+        mve::math::Vec3f sub_cam_dir;
         cam.fill_viewing_direction(*sub_cam_dir);
-        math::Vec3f sub_cam_up;
+        mve::math::Vec3f sub_cam_up;
         sub_cam_up[0] = cam.rot[2];
         sub_cam_up[1] = cam.rot[5];
         sub_cam_up[2] = cam.rot[8];
@@ -131,13 +131,13 @@ ViewSelection::position_based_selection (std::size_t const view) const
     return neighbors;
 }
 
-mve::Scene::ViewList
+mve::core::Scene::ViewList
 ViewSelection::get_sorted_neighbors(std::size_t const view) const
 {
-    mve::Scene::ViewList neighbors;
-    mve::View::ConstPtr main_view = this->views[view];
-    mve::CameraInfo const& main_cam = main_view->get_camera();
-    math::Vec3f main_cam_pos;
+    mve::core::Scene::ViewList neighbors;
+    mve::core::View::ConstPtr main_view = this->views[view];
+    mve::core::CameraInfo const& main_cam = main_view->get_camera();
+    mve::math::Vec3f main_cam_pos;
     main_cam.fill_camera_pos(*main_cam_pos);
     std::map<float, std::size_t> distances;
     for (std::size_t i = 0; i < views.size(); ++i)
@@ -145,10 +145,10 @@ ViewSelection::get_sorted_neighbors(std::size_t const view) const
         if (views[i] == nullptr || i == view)
             continue;
 
-        mve::CameraInfo const& cam = views[i]->get_camera();
+        mve::core::CameraInfo const& cam = views[i]->get_camera();
         if (cam.flen == 0.0)
             continue;
-        math::Vec3f pos;
+        mve::math::Vec3f pos;
         cam.fill_camera_pos(*pos);
         float dist = (main_cam_pos - pos).norm();
         distances[dist] = i;
@@ -159,4 +159,4 @@ ViewSelection::get_sorted_neighbors(std::size_t const view) const
     return neighbors;
 }
 
-SMVS_NAMESPACE_END
+} // namespace smvs

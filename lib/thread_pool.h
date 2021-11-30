@@ -13,6 +13,7 @@
 #include <mutex>
 #include <queue>
 #include <thread>
+#include <functional>
 #include <future>
 #include <vector>
 #include <condition_variable>

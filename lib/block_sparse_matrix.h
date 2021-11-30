@@ -20,7 +20,7 @@
 #include "conjugate_gradient.h"
 #include "ldl_decomposition.h"
 
-SMVS_NAMESPACE_BEGIN
+namespace smvs {
 
 /**
  *  Block Sparse matrix class.
@@ -365,6 +365,6 @@ BlockSparseMatrix<N>::output_size (void) const
     return this->rows;
 }
 
-SMVS_NAMESPACE_END
+} // namespace smvs
 
 #endif /* SMVS_BLOCK_SPARSE_MATRIX_HEADER */

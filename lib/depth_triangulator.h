@@ -13,23 +13,23 @@
 #include <vector>
 #include <map>
 
-#include "core/image.h"
-#include "core/camera.h"
-#include "core/mesh.h"
+#include "mve/core/image.h"
+#include "mve/core/camera.h"
+#include "mve/core/mesh.h"
 
 #include "defines.h"
 #include "delaunay_2d.h"
 
-SMVS_NAMESPACE_BEGIN
+namespace smvs {
 
 class DepthTriangulator
 {
 public:
-    DepthTriangulator (mve::FloatImage::ConstPtr depth_map,
-        mve::CameraInfo const& camera,
-        mve::ByteImage::ConstPtr color = nullptr);
+    DepthTriangulator (mve::core::FloatImage::ConstPtr depth_map,
+        mve::core::CameraInfo const& camera,
+        mve::core::ByteImage::ConstPtr color = nullptr);
 
-    mve::TriangleMesh::Ptr full_triangulation (void);
+    mve::core::TriangleMesh::Ptr full_triangulation (void);
 
     /**
      * Compute approximate triangulation of depth map using the greedy,
@@ -45,11 +45,11 @@ public:
      *            the ground truth depth map. This defaults to 0.05% of the
      *            full depth range [min, max].
      */
-    mve::TriangleMesh::Ptr approximate_triangulation (int max_vertices = -1,
+    mve::core::TriangleMesh::Ptr approximate_triangulation (int max_vertices = -1,
         double max_error = -1.0);
 
-    static void pixels_for_triangle (math::Vec3d const& a, math::Vec3d const& b,
-        math::Vec3d const& c, std::vector<math::Vec2i> * pixels);
+    static void pixels_for_triangle (mve::math::Vec3d const& a, mve::math::Vec3d const& b,
+        mve::math::Vec3d const& c, std::vector<mve::math::Vec2i> * pixels);
 
 private:
     struct Triangle
@@ -57,8 +57,8 @@ private:
         Triangle (std::size_t id, double * vertices);
         std::size_t id;
         int num_zero_depths;
-        math::Vec3d v1, v2, v3;
-        math::Vec3d candidate;
+        mve::math::Vec3d v1, v2, v3;
+        mve::math::Vec3d candidate;
         std::multimap<double, std::size_t>::iterator heap_iterator;
     };
 
@@ -66,9 +66,9 @@ private:
     void scan_triangle (std::size_t id);
 
 private:
-    mve::FloatImage::ConstPtr depth_map;
-    mve::CameraInfo const& camera;
-    mve::ByteImage::ConstPtr color;
+    mve::core::FloatImage::ConstPtr depth_map;
+    mve::core::CameraInfo const& camera;
+    mve::core::ByteImage::ConstPtr color;
 
     std::vector<Triangle> triangles;
     std::multimap<double, std::size_t, std::greater<double>> triangle_heap;
@@ -78,8 +78,8 @@ private:
 /* ------------------------ Implementation ------------------------ */
 
 inline
-DepthTriangulator::DepthTriangulator (mve::FloatImage::ConstPtr depth_map,
-    mve::CameraInfo const& camera, mve::ByteImage::ConstPtr color)
+DepthTriangulator::DepthTriangulator (mve::core::FloatImage::ConstPtr depth_map,
+    mve::core::CameraInfo const& camera, mve::core::ByteImage::ConstPtr color)
     : depth_map(depth_map), camera(camera), color(color)
 {
 }
@@ -91,6 +91,6 @@ DepthTriangulator::Triangle::Triangle (std::size_t id, double * vertices)
 }
 
 
-SMVS_NAMESPACE_END
+} // namespace smvs
 
 #endif /* SMVS_DEPTH_TRIANGULATOR_HEADER */

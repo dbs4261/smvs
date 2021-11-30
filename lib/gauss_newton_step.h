@@ -10,8 +10,8 @@
 #ifndef SMVS_GAUSS_NEWTON_STEP_HEADER
 #define SMVS_GAUSS_NEWTON_STEP_HEADER
 
-#include "math/vector.h"
-#include "math/matrix.h"
+#include "mve/math/vector.h"
+#include "mve/math/matrix.h"
 
 #include "defines.h"
 #include "sse_vector.h"
@@ -20,7 +20,7 @@
 #include "correspondence.h"
 #include "global_lighting.h"
 
-SMVS_NAMESPACE_BEGIN
+namespace smvs {
 
 class GaussNewtonStep
 {
@@ -40,8 +40,8 @@ public:
     GaussNewtonStep (Options const& opts,
         StereoView::ConstPtr main_view,
         std::vector<StereoView::Ptr> const& sub_views,
-        std::vector<math::Matrix3d> const& Mi,
-        std::vector<math::Vec3d> const& ti);
+        std::vector<mve::math::Matrix3d> const& Mi,
+        std::vector<mve::math::Vec3d> const& ti);
 
     void construct (Surface::Ptr surface,
         std::vector<std::vector<std::size_t>> const& subsurfaces,
@@ -62,43 +62,43 @@ private:
     Options const& opts;
     StereoView::ConstPtr main_view;
     std::vector<StereoView::Ptr> const& sub_views;
-    std::vector<math::Matrix3d> const& Mi;
-    std::vector<math::Vec3d> const& ti;
-    mve::FloatImage::ConstPtr main_gradients;
-    mve::FloatImage::ConstPtr main_gradients_linear;
+    std::vector<mve::math::Matrix3d> const& Mi;
+    std::vector<mve::math::Vec3d> const& ti;
+    mve::core::FloatImage::ConstPtr main_gradients;
+    mve::core::FloatImage::ConstPtr main_gradients_linear;
 
     GlobalLighting::Ptr lighting;
 
-    std::vector<math::Vec2d> pixels;
+    std::vector<mve::math::Vec2d> pixels;
     std::vector<std::size_t> pids;
     std::vector<double> depths;
-    std::vector<math::Vec2d> depth_derivatives;
-    std::vector<math::Vec3d> depth_2nd_derivatives;
+    std::vector<mve::math::Vec2d> depth_derivatives;
+    std::vector<mve::math::Vec3d> depth_2nd_derivatives;
 
-    math::Vec2d c_dn[16];
-    math::Vec2d jac_dn[16];
+    mve::math::Vec2d c_dn[16];
+    mve::math::Vec2d jac_dn[16];
     double full_surface_div[6];
     double full_surface_div_deriv[96];
     double normal_deriv[48];
-    util::AlignedMemory<math::Vec2d, 16> j_grad_subs;
-    util::AlignedMemory<math::Vec2d, 16> jac_entries;
+    mve::util::AlignedMemory<mve::math::Vec2d, 16> j_grad_subs;
+    mve::util::AlignedMemory<mve::math::Vec2d, 16> jac_entries;
 
     std::vector<double> p_diffs;
     std::vector<double> p_weights;
-    math::Vec2d grad_main;
-    math::Vec2d grad_linear;
-    math::Vec2d grad_sub;
-    math::Matrix2d hess_sub;
-    math::Vec2d proj;
-    math::Matrix2d jac;
-    math::Matrix2d jac_hess;
-    util::AlignedMemory<math::Vec2d, 16> reg_grad_mem;
-    util::AlignedMemory<math::Vec2d, 16> reg_hessian_mem;
+    mve::math::Vec2d grad_main;
+    mve::math::Vec2d grad_linear;
+    mve::math::Vec2d grad_sub;
+    mve::math::Matrix2d hess_sub;
+    mve::math::Vec2d proj;
+    mve::math::Matrix2d jac;
+    mve::math::Matrix2d jac_hess;
+    mve::util::AlignedMemory<mve::math::Vec2d, 16> reg_grad_mem;
+    mve::util::AlignedMemory<mve::math::Vec2d, 16> reg_hessian_mem;
     double basic_regularizer_weight;
     Correspondence C;
 
 };
 
-SMVS_NAMESPACE_END
+} // namespace smvs
 
 #endif /* SMVS_GAUSS_NEWTON_STEP_HEADER */

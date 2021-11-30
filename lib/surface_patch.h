@@ -12,12 +12,12 @@
 
 #include <vector>
 
-#include "core/image.h"
+#include "mve/core/image.h"
 
 #include "bicubic_patch.h"
 #include "defines.h"
 
-SMVS_NAMESPACE_BEGIN
+namespace smvs {
 
 class SurfacePatch
 {
@@ -29,21 +29,21 @@ public:
     static SurfacePatch::Ptr create (int x, int y, int size,
         std::vector<BicubicPatch::Node::Ptr> & nodes);
 
-    void fill_depth_map (mve::FloatImage & image);
-    void fill_normal_map (mve::FloatImage & image, float inv_flen);
+    void fill_depth_map (mve::core::FloatImage & image);
+    void fill_normal_map (mve::core::FloatImage & image, float inv_flen);
 
     int get_x (void) const;
     int get_y (void) const;
 
-    void fill_values_at_nodes (std::vector<math::Vec2d> * pixels,
+    void fill_values_at_nodes (std::vector<mve::math::Vec2d> * pixels,
         std::vector<double> * depths = nullptr,
-        std::vector<math::Vec2d> * first_deriv = nullptr,
+        std::vector<mve::math::Vec2d> * first_deriv = nullptr,
         std::vector<double> * second_deriv = nullptr);
 
-    void fill_values_at_pixels (std::vector<math::Vec2d> * pixels,
+    void fill_values_at_pixels (std::vector<mve::math::Vec2d> * pixels,
         std::vector<double> * depths = nullptr,
-        std::vector<math::Vec2d> * first_deriv = nullptr,
-        std::vector<math::Vec3d> * second_deriv = nullptr,
+        std::vector<mve::math::Vec2d> * first_deriv = nullptr,
+        std::vector<mve::math::Vec3d> * second_deriv = nullptr,
         std::vector<std::size_t> * pids = nullptr,
         int subsample = 1);
 
@@ -114,6 +114,6 @@ SurfacePatch::get_nodes (void)
     return nodes;
 }
 
-SMVS_NAMESPACE_END
+} // namespace smvs
 
 #endif /* SMVS_SURFACE_PATCH_HEADER */

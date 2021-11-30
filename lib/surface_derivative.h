@@ -12,8 +12,8 @@
 
 #include "defines.h"
 
-SMVS_NAMESPACE_BEGIN
-SURFACE_DERIVATIVE_NAMESPACE_BEGIN
+namespace smvs {
+namespace surfderiv {
 
 void
 fill_normal(double x, double y, double inv_flen, double w,
@@ -41,7 +41,7 @@ void
 mean_curvature_derivative (double const* d_node, double dx,
     double dy, double dxy, double dxx, double dyy, double * deriv);
 
-SURFACE_DERIVATIVE_NAMESPACE_END
-SMVS_NAMESPACE_END
+} // namespace surfderiv
+} // namespace smvs
 
 #endif /* SMVS_SURFACE_DERIVATIVE_HEADER */

@@ -10,13 +10,13 @@
 #ifndef SMVS_SGM_STEREO_HEADER
 #define SMVS_SGM_STEREO_HEADER
 
-#include "core/image.h"
-#include "util/aligned_memory.h"
+#include "mve/core/image.h"
+#include "mve/util/aligned_memory.h"
 
 #include "stereo_view.h"
 #include "defines.h"
 
-SMVS_NAMESPACE_BEGIN
+namespace smvs {
 
 class SGMStereo
 {
@@ -36,36 +36,36 @@ public:
     SGMStereo (Options const& opts,
        StereoView::Ptr main, StereoView::Ptr neighbor);
 
-    static mve::FloatImage::Ptr reconstruct (SGMStereo::Options sgm_opts,
+    static mve::core::FloatImage::Ptr reconstruct (SGMStereo::Options sgm_opts,
         StereoView::Ptr main_view, StereoView::Ptr neighbor,
-        mve::Bundle::ConstPtr bundle = nullptr);
+        mve::core::Bundle::ConstPtr bundle = nullptr);
 
-    mve::FloatImage::Ptr run_sgm (float min_depth, float max_depth);
+    mve::core::FloatImage::Ptr run_sgm (float min_depth, float max_depth);
 
 private:
     void warped_neighbors_for_depth (std::vector<float> const& depths,
-        mve::ByteImage::Ptr image);
+        mve::core::ByteImage::Ptr image);
 
-    void census_filter (mve::ByteImage::ConstPtr image,
-        mve::Image<uint64_t>::Ptr filtered);
+    void census_filter (mve::core::ByteImage::ConstPtr image,
+        mve::core::Image<uint64_t>::Ptr filtered);
 
     void create_cost_volume (float min_depth, float max_depth, int num_steps);
 
     void aggregate_sgm_costs (void);
 
     void fill_path_cost (int x, int y, int px, int py,
-        mve::RawImage::Ptr path);
+        mve::core::RawImage::Ptr path);
 
     void fill_path_cost_sse (int base, int base_prev,
-        util::AlignedMemory<uint16_t> * path);
-    void copy_cost_and_add_to_sgm (util::AlignedMemory<uint16_t> * local_volume,
+        mve::util::AlignedMemory<uint16_t> * path);
+    void copy_cost_and_add_to_sgm (mve::util::AlignedMemory<uint16_t> * local_volume,
         int base);
     uint16_t sse_reduction_min (uint16_t * data, std::size_t size);
 
-    mve::FloatImage::Ptr depth_from_cost_volume (void);
-    mve::FloatImage::Ptr depth_from_sgm_volume (void);
+    mve::core::FloatImage::Ptr depth_from_cost_volume (void);
+    mve::core::FloatImage::Ptr depth_from_sgm_volume (void);
 
-    static void fill_depth_range_for_view (mve::Bundle::ConstPtr bundle,
+    static void fill_depth_range_for_view (mve::core::Bundle::ConstPtr bundle,
         StereoView::Ptr view, float * range);
 
 private:
@@ -73,20 +73,20 @@ private:
 
     StereoView::Ptr main;
     StereoView::Ptr neighbor;
-    mve::ByteImage::ConstPtr main_image;
-    mve::ByteImage::ConstPtr neighbor_image;
+    mve::core::ByteImage::ConstPtr main_image;
+    mve::core::ByteImage::ConstPtr neighbor_image;
 
-    mve::ByteImage::Ptr cost_volume;
-    mve::RawImage::Ptr sgm_volume;
+    mve::core::ByteImage::Ptr cost_volume;
+    mve::core::RawImage::Ptr sgm_volume;
     std::vector<float> cost_volume_depths;
 
-    util::AlignedMemory<uint16_t> sse_cost_volume;
-    util::AlignedMemory<uint16_t> sse_sgm_volume;
-    util::AlignedMemory<uint16_t> min_cost_updates;
-    util::AlignedMemory<uint16_t> cost_updates;
-    util::AlignedMemory<uint16_t> mins;
+    mve::util::AlignedMemory<uint16_t> sse_cost_volume;
+    mve::util::AlignedMemory<uint16_t> sse_sgm_volume;
+    mve::util::AlignedMemory<uint16_t> min_cost_updates;
+    mve::util::AlignedMemory<uint16_t> cost_updates;
+    mve::util::AlignedMemory<uint16_t> mins;
 };
 
-SMVS_NAMESPACE_END
+} // namespace smvs
 
 #endif /* SMVS_SGM_STEREO_HEADER */

@@ -9,16 +9,16 @@
 
 #include "correspondence.h"
 
-SMVS_NAMESPACE_BEGIN
+namespace smvs {
 
-Correspondence::Correspondence (math::Matrix3d const& M, math::Vec3d const& t,
+Correspondence::Correspondence (mve::math::Matrix3d const& M, mve::math::Vec3d const& t,
     double u, double v, double w, double w_dx, double w_dy)
 {
     this->update(M, t, u, v, w, w_dx, w_dy);
 }
 
 void
-Correspondence::update (math::Matrix3d const& M, math::Vec3d const& t,
+Correspondence::update (mve::math::Matrix3d const& M, mve::math::Vec3d const& t,
     double u, double v, double w, double w_dx, double w_dy)
 {
     this->t = t;
@@ -54,25 +54,25 @@ void
 Correspondence::get_derivative (
     double const* dn00, double const* dn10,
     double const* dn01, double const* dn11,
-    math::Vec2d * c_dn00,
-    math::Vec2d * c_dn10,
-    math::Vec2d * c_dn01,
-    math::Vec2d * c_dn11) const
+    mve::math::Vec2d * c_dn00,
+    mve::math::Vec2d * c_dn10,
+    mve::math::Vec2d * c_dn01,
+    mve::math::Vec2d * c_dn11) const
 {
     double du_w = (p * d - r * a) / d2;
     double dv_w = (q * d - r * b) / d2;
 
     for (int i = 0; i < 4; ++i)
     {
-        c_dn00[i] = math::Vec2d(du_w, dv_w) * dn00[i];
-        c_dn10[i] = math::Vec2d(du_w, dv_w) * dn10[i];
-        c_dn01[i] = math::Vec2d(du_w, dv_w) * dn01[i];
-        c_dn11[i] = math::Vec2d(du_w, dv_w) * dn11[i];
+        c_dn00[i] = mve::math::Vec2d(du_w, dv_w) * dn00[i];
+        c_dn10[i] = mve::math::Vec2d(du_w, dv_w) * dn10[i];
+        c_dn01[i] = mve::math::Vec2d(du_w, dv_w) * dn01[i];
+        c_dn11[i] = mve::math::Vec2d(du_w, dv_w) * dn11[i];
     }
 }
 
 void
-Correspondence::fill_derivative (double const* dn, math::Vec2d * c_dn) const
+Correspondence::fill_derivative (double const* dn, mve::math::Vec2d * c_dn) const
 {
     double du_w = (p * d - r * a) / d2;
     double dv_w = (q * d - r * b) / d2;
@@ -101,74 +101,74 @@ Correspondence::fill_jacobian(double * jac) const
 
 void
 Correspondence::fill_jacobian_derivative_grad(double const* grad,
-    double const* dn, math::Vec2d * jac_dn) const
+    double const* dn, mve::math::Vec2d * jac_dn) const
 {
     double d4 = d2 * d2;
     double d_prime = 2.0 * d * r;
 
-    math::Vec2d du_a_temp;
+    mve::math::Vec2d du_a_temp;
     du_a_temp[0] = w * (p_prime[0] * r - p * r_prime[0]);
     du_a_temp[1] = w * (p_prime[1] * r - p * r_prime[1]);
-    math::Vec2d du_a_prime;
+    mve::math::Vec2d du_a_prime;
     du_a_prime[0] = 2.0 * du_a_temp[0];
     du_a_prime[1] = 2.0 * du_a_temp[1];
 
-    math::Vec2d du_b_prime;
+    mve::math::Vec2d du_b_prime;
     du_b_prime[0] = (p_prime[0] * t[2] - r_prime[0] * t[0]);
     du_b_prime[1] = (p_prime[1] * t[2] - r_prime[1] * t[0]);
 
     double du_c_prime = (p * t[2] - r * t[0]);
-    math::Vec2d du_c;
+    mve::math::Vec2d du_c;
     du_c[0] = w_prime[0] * du_c_prime;
     du_c[1] = w_prime[1] * du_c_prime;
 
-    math::Vec2d dv_a_temp;
+    mve::math::Vec2d dv_a_temp;
     dv_a_temp[0] = w * (q_prime[0] * r - q * r_prime[0]);
     dv_a_temp[1] = w * (q_prime[1] * r - q * r_prime[1]);
-    math::Vec2d dv_a_prime;
+    mve::math::Vec2d dv_a_prime;
     dv_a_prime[0] = 2.0 * dv_a_temp[0];
     dv_a_prime[1] = 2.0 * dv_a_temp[1];
 
-    math::Vec2d dv_b_prime;
+    mve::math::Vec2d dv_b_prime;
     dv_b_prime[0] = (q_prime[0] * t[2] - r_prime[0] * t[1]);
     dv_b_prime[1] = (q_prime[1] * t[2] - r_prime[1] * t[1]);
 
     double dv_c_prime = (q * t[2] - r * t[1]);
-    math::Vec2d dv_c;
+    mve::math::Vec2d dv_c;
     dv_c[0] = w_prime[0] * dv_c_prime;
     dv_c[1] = w_prime[1] * dv_c_prime;
 
-    math::Vec2d du_a_b_c;
+    mve::math::Vec2d du_a_b_c;
     du_a_b_c[0] = w * (du_a_temp[0] + du_b_prime[0]) + du_c[0];
     du_a_b_c[1] = w * (du_a_temp[1] + du_b_prime[1]) + du_c[1];
-    math::Vec2d dv_a_b_c;
+    mve::math::Vec2d dv_a_b_c;
     dv_a_b_c[0] = w * (dv_a_temp[0] + dv_b_prime[0]) + dv_c[0];
     dv_a_b_c[1] = w * (dv_a_temp[1] + dv_b_prime[1]) + dv_c[1];
 
-    math::Vec2d du_ap_bp_d;
+    mve::math::Vec2d du_ap_bp_d;
     du_ap_bp_d[0] = (du_a_prime[0] + du_b_prime[0]) / d2;
     du_ap_bp_d[1] = (du_a_prime[1] + du_b_prime[1]) / d2;
-    math::Vec2d dv_ap_bp_d;
+    mve::math::Vec2d dv_ap_bp_d;
     dv_ap_bp_d[0] = (dv_a_prime[0] + dv_b_prime[0]) / d2;
     dv_ap_bp_d[1] = (dv_a_prime[1] + dv_b_prime[1]) / d2;
-    math::Vec2d du_a_b_c_d_prime;
+    mve::math::Vec2d du_a_b_c_d_prime;
     du_a_b_c_d_prime[0] = du_a_b_c[0] * d_prime / d4;
     du_a_b_c_d_prime[1] = du_a_b_c[1] * d_prime / d4;
-    math::Vec2d dv_a_b_c_d_prime;
+    mve::math::Vec2d dv_a_b_c_d_prime;
     dv_a_b_c_d_prime[0] = dv_a_b_c[0] * d_prime / d4;
     dv_a_b_c_d_prime[1] = dv_a_b_c[1] * d_prime / d4;
     double du_c_prime_d = du_c_prime / d2;
     double dv_c_prime_d = dv_c_prime / d2;
 
-    math::Vec2d du_ap_bp_d_du_a_b_c_d_prime;
+    mve::math::Vec2d du_ap_bp_d_du_a_b_c_d_prime;
     du_ap_bp_d_du_a_b_c_d_prime[0] = du_ap_bp_d[0] - du_a_b_c_d_prime[0];
     du_ap_bp_d_du_a_b_c_d_prime[1] = du_ap_bp_d[1] - du_a_b_c_d_prime[1];
-    math::Vec2d dv_ap_bp_d_dv_a_b_c_d_prime;
+    mve::math::Vec2d dv_ap_bp_d_dv_a_b_c_d_prime;
     dv_ap_bp_d_dv_a_b_c_d_prime[0] = dv_ap_bp_d[0] - dv_a_b_c_d_prime[0];
     dv_ap_bp_d_dv_a_b_c_d_prime[1] = dv_ap_bp_d[1] - dv_a_b_c_d_prime[1];
 
-    math::Vec2d du_dn;
-    math::Vec2d dv_dn;
+    mve::math::Vec2d du_dn;
+    mve::math::Vec2d dv_dn;
     for (int n = 0; n < 4; ++n)
         for (int i = 0; i < 4; ++i)
         {
@@ -186,4 +186,4 @@ Correspondence::fill_jacobian_derivative_grad(double const* grad,
         }
 }
 
-SMVS_NAMESPACE_END
+} // namespace smvs

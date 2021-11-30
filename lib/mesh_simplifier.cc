@@ -10,53 +10,53 @@
 #include <set>
 #include <iostream>
 
-#include "core/mesh_tools.h"
-#include "math/matrix_tools.h"
+#include "mve/core/mesh_tools.h"
+#include "mve/math/matrix_tools.h"
 
 #include "mesh_simplifier.h"
 
-SMVS_NAMESPACE_BEGIN
+namespace smvs {
 
 /* Edge collapse from MVE repo (c) Simon Fuhrmann 
    Updated by Fabian Langguth to include non manifold check and fix bugs */
 /* TODO: make edge collapse accessible in MVE rather than having it here */
 bool
-edge_collapse (mve::TriangleMesh::Ptr mesh, mve::MeshInfo& mesh_info,
-    std::size_t v1, std::size_t v2, math::Vec3f const& new_vert,
+edge_collapse (mve::core::TriangleMesh::Ptr mesh, mve::core::MeshInfo& mesh_info,
+    std::size_t v1, std::size_t v2, mve::math::Vec3f const& new_vert,
     std::vector<std::size_t> const& afaces,
     float acos_threshold = 0.95f)
 {
-    mve::TriangleMesh::FaceList& faces = mesh->get_faces();
-    mve::TriangleMesh::VertexList& verts = mesh->get_vertices();
+    mve::core::TriangleMesh::FaceList& faces = mesh->get_faces();
+    mve::core::TriangleMesh::VertexList& verts = mesh->get_vertices();
 
     /* Test if the hypothetical vertex destroys geometry. */
-    mve::MeshInfo::VertexInfo& vinfo1 = mesh_info[v1];
+    mve::core::MeshInfo::VertexInfo& vinfo1 = mesh_info[v1];
     for (std::size_t i = 0; i < vinfo1.verts.size(); ++i)
     {
         std::size_t ip1 = (i + 1) % vinfo1.verts.size();
         if (vinfo1.verts[i] == v2 || vinfo1.verts[ip1] == v2)
             continue;
 
-        math::Vec3f const& av1 = verts[vinfo1.verts[i]];
-        math::Vec3f const& av2 = verts[vinfo1.verts[ip1]];
-        math::Vec3f n1 = (av1 - verts[v1]).cross(av2 - verts[v1]).normalized();
-        math::Vec3f n2 = (av1 - new_vert).cross(av2 - new_vert).normalized();
+        mve::math::Vec3f const& av1 = verts[vinfo1.verts[i]];
+        mve::math::Vec3f const& av2 = verts[vinfo1.verts[ip1]];
+        mve::math::Vec3f n1 = (av1 - verts[v1]).cross(av2 - verts[v1]).normalized();
+        mve::math::Vec3f n2 = (av1 - new_vert).cross(av2 - new_vert).normalized();
 
         float dot = n1.dot(n2);
         if (MATH_ISNAN(dot)|| dot < acos_threshold)
             return false;
     }
 
-    mve::MeshInfo::VertexInfo& vinfo2 = mesh_info[v2];
+    mve::core::MeshInfo::VertexInfo& vinfo2 = mesh_info[v2];
     for (std::size_t i = 0; i < vinfo2.verts.size(); ++i)
     {
         std::size_t ip1 = (i + 1) % vinfo2.verts.size();
         if (vinfo2.verts[i] == v1 || vinfo2.verts[ip1] == v1)
             continue;
-        math::Vec3f const& av1 = verts[vinfo2.verts[i]];
-        math::Vec3f const& av2 = verts[vinfo2.verts[ip1]];
-        math::Vec3f n1 = (av1 - verts[v2]).cross(av2 - verts[v2]).normalized();
-        math::Vec3f n2 = (av1 - new_vert).cross(av2 - new_vert).normalized();
+        mve::math::Vec3f const& av1 = verts[vinfo2.verts[i]];
+        mve::math::Vec3f const& av2 = verts[vinfo2.verts[ip1]];
+        mve::math::Vec3f n1 = (av1 - verts[v2]).cross(av2 - verts[v2]).normalized();
+        mve::math::Vec3f n2 = (av1 - new_vert).cross(av2 - new_vert).normalized();
 
         float dot = n1.dot(n2);
         if (MATH_ISNAN(dot) || dot < acos_threshold)
@@ -107,10 +107,10 @@ edge_collapse (mve::TriangleMesh::Ptr mesh, mve::MeshInfo& mesh_info,
                 faces[vinfo2.faces[i] * 3 + j] = static_cast<unsigned int>(v1);
 
     /* Update vertex info for v3 and v4: remove v2, remove deleted faces. */
-    mve::MeshInfo::VertexInfo& vinfo3 = mesh_info[v3];
+    mve::core::MeshInfo::VertexInfo& vinfo3 = mesh_info[v3];
     vinfo3.remove_adjacent_face(afaces[0]);
     vinfo3.remove_adjacent_vertex(v2);
-    mve::MeshInfo::VertexInfo& vinfo4 = mesh_info[v4];
+    mve::core::MeshInfo::VertexInfo& vinfo4 = mesh_info[v4];
     vinfo4.remove_adjacent_face(afaces[1]);
     vinfo4.remove_adjacent_vertex(v2);
 
@@ -129,7 +129,7 @@ edge_collapse (mve::TriangleMesh::Ptr mesh, mve::MeshInfo& mesh_info,
     /* Update vertex info for v2. */
     vinfo2.faces.clear();
     vinfo2.verts.clear();
-    vinfo2.vclass = mve::MeshInfo::VERTEX_CLASS_UNREF;
+    vinfo2.vclass = mve::core::MeshInfo::VERTEX_CLASS_UNREF;
 
     return true;
 }
@@ -137,23 +137,23 @@ edge_collapse (mve::TriangleMesh::Ptr mesh, mve::MeshInfo& mesh_info,
 void
 MeshSimplifier::compute_initial_quadrics (void)
 {
-    mve::TriangleMesh::VertexList & verts = this->mesh->get_vertices();
-    mve::TriangleMesh::FaceList & faces = this->mesh->get_faces();
+    mve::core::TriangleMesh::VertexList & verts = this->mesh->get_vertices();
+    mve::core::TriangleMesh::FaceList & faces = this->mesh->get_faces();
 
     this->quadrics.resize(this->mesh_info.size());
     for (std::size_t v = 0; v < this->mesh_info.size(); ++v)
     {
         this->quadrics[v].fill(0);
-        mve::MeshInfo::VertexInfo const& vinfo = this->mesh_info.at(v);
+        mve::core::MeshInfo::VertexInfo const& vinfo = this->mesh_info.at(v);
         for (std::size_t f = 0; f < vinfo.faces.size(); ++f)
         {
-            math::Vec3d faceverts[3];
+            mve::math::Vec3d faceverts[3];
             for (std::size_t i = 0; i < 3; ++i)
                 faceverts[i] = verts[faces[vinfo.faces[f] * 3 + i]];
-            math::Vec3d normal = (faceverts[1] - faceverts[0]).cross(
+            mve::math::Vec3d normal = (faceverts[1] - faceverts[0]).cross(
                 faceverts[2] - faceverts[0]).normalized();
 
-            math::Vec4d face_plane(normal, -normal.dot(faceverts[0]));
+            mve::math::Vec4d face_plane(normal, -normal.dot(faceverts[0]));
             for (int r = 0; r < 4; ++r)
                 for (int c = 0; c < 4; ++c)
                     this->quadrics[v](r, c) += face_plane[r] * face_plane[c];
@@ -164,31 +164,31 @@ MeshSimplifier::compute_initial_quadrics (void)
 MeshSimplifier::SimplifyEdge
 MeshSimplifier::create_simplify_edge (std::size_t v1, std::size_t v2)
 {
-    mve::TriangleMesh::VertexList & verts = this->mesh->get_vertices();
+    mve::core::TriangleMesh::VertexList & verts = this->mesh->get_vertices();
     SimplifyEdge sedge;
     sedge.v1 = v1;
     sedge.v2 = v2;
     sedge.quadric = this->quadrics[v1] + this->quadrics[v2];
 
     /* Compute optimal vertex position */
-    math::Matrix4d Q = sedge.quadric;
+    mve::math::Matrix4d Q = sedge.quadric;
     Q(3,0) = Q(3,1) = Q(3,2) = 0;
     Q(3,3) = 1.0;
-    double det = math::matrix_determinant(Q);
+    double det = mve::math::matrix_determinant(Q);
     if (det != 0.0)
     {
         /* compute optimal vertex position */
-        Q = math::matrix_inverse(Q);
-        math::Vec4d rhs(0.0, 0.0, 0.0, 1.0);
-        math::Vec4d vert4 = Q*rhs;
-        sedge.new_vert = math::Vec3d(*vert4);
+        Q = mve::math::matrix_inverse(Q);
+        mve::math::Vec4d rhs(0.0, 0.0, 0.0, 1.0);
+        mve::math::Vec4d vert4 = Q*rhs;
+        sedge.new_vert = mve::math::Vec3d(*vert4);
         sedge.cost = std::max(0.0, (sedge.quadric * vert4).dot(vert4));
     }
     else
     {
         /* Choose average between v1 and v2 */
         sedge.new_vert = (verts[v1] + verts[v2]) * 0.5;
-        math::Vec4d vert4(sedge.new_vert, 1.0);
+        mve::math::Vec4d vert4(sedge.new_vert, 1.0);
         sedge.cost = std::max(0.0, (sedge.quadric * vert4).dot(vert4));
     }
 
@@ -202,8 +202,8 @@ MeshSimplifier::fill_queue (void)
     std::set<std::pair<std::size_t, std::size_t>> edges;
     for (std::size_t v = 0; v < this->mesh_info.size(); ++v)
     {
-        mve::MeshInfo::VertexInfo const& vinfo = this->mesh_info.at(v);
-        if (vinfo.vclass != mve::MeshInfo::VERTEX_CLASS_SIMPLE)
+        mve::core::MeshInfo::VertexInfo const& vinfo = this->mesh_info.at(v);
+        if (vinfo.vclass != mve::core::MeshInfo::VERTEX_CLASS_SIMPLE)
             continue;
         for (std::size_t n = 0; n < vinfo.verts.size(); ++n)
             if (vinfo.verts[n] < v)
@@ -217,13 +217,13 @@ MeshSimplifier::fill_queue (void)
             this->create_simplify_edge(edge.first, edge.second));
 }
 
-mve::TriangleMesh::Ptr
+mve::core::TriangleMesh::Ptr
 MeshSimplifier::get_simplified (float percent)
 {
     this->mesh = this->input_mesh->duplicate();
     this->compute_initial_quadrics();
 
-    mve::TriangleMesh::VertexList & verts = this->mesh->get_vertices();
+    mve::core::TriangleMesh::VertexList & verts = this->mesh->get_vertices();
 
     this->fill_queue();
 
@@ -237,8 +237,8 @@ MeshSimplifier::get_simplified (float percent)
         std::size_t const v2 = sedge.v2;
 
         /* Skip already collapsed vertices */
-        if (this->mesh_info[v1].vclass == mve::MeshInfo::VERTEX_CLASS_UNREF
-            || this->mesh_info[v2].vclass == mve::MeshInfo::VERTEX_CLASS_UNREF)
+        if (this->mesh_info[v1].vclass == mve::core::MeshInfo::VERTEX_CLASS_UNREF
+            || this->mesh_info[v2].vclass == mve::core::MeshInfo::VERTEX_CLASS_UNREF)
         {
             removal_queue.pop();
             continue;
@@ -265,7 +265,7 @@ MeshSimplifier::get_simplified (float percent)
         this->quadrics[v1] = sedge.quadric;
 
         /* add new edges to queue */
-        mve::MeshInfo::VertexInfo const& vinfo = this->mesh_info.at(v1);
+        mve::core::MeshInfo::VertexInfo const& vinfo = this->mesh_info.at(v1);
         for (std::size_t n = 0; n < vinfo.verts.size(); ++n)
             this->removal_queue.emplace(
                 this->create_simplify_edge(v1, vinfo.verts[n]));
@@ -273,8 +273,8 @@ MeshSimplifier::get_simplified (float percent)
         removal_queue.pop();
     }
     /* Cleanup invalid triangles and unreferenced vertices. */
-    mve::geom::mesh_delete_unreferenced(mesh);
+    mve::core::geom::mesh_delete_unreferenced(mesh);
     return this->mesh;
 }
 
-SMVS_NAMESPACE_END
+} // namespace smvs

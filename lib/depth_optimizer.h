@@ -10,9 +10,9 @@
 #ifndef SMVS_DEPTH_OPTIMIZER_HEADER
 #define SMVS_DEPTH_OPTIMIZER_HEADER
 
-#include "core/depthmap.h"
+#include "mve/core/depthmap.h"
 
-#include "math/matrix.h"
+#include "mve/math/matrix.h"
 
 #include "stereo_view.h"
 #include "surface.h"
@@ -22,7 +22,7 @@
 #include "defines.h"
 #include "correspondence.h"
 
-SMVS_NAMESPACE_BEGIN
+namespace smvs {
 
 class DepthOptimizer
 {
@@ -47,7 +47,7 @@ public:
 public:
     DepthOptimizer (StereoView::Ptr main_view,
         std::vector<StereoView::Ptr> const& sub_views,
-        mve::Bundle::ConstPtr bundle,
+        mve::core::Bundle::ConstPtr bundle,
         Options const& options);
 
     DepthOptimizer (StereoView::Ptr main_view,
@@ -57,8 +57,8 @@ public:
 
     void optimize (void);
 
-    mve::FloatImage::Ptr get_depth (void);
-    mve::FloatImage::Ptr get_normals (void);
+    mve::core::FloatImage::Ptr get_depth (void);
+    mve::core::FloatImage::Ptr get_normals (void);
 
 private:
     /* Initial preparations */
@@ -67,19 +67,19 @@ private:
     void create_subview_surfaces (void);
 
     /* Joint bilateral filter on initial depth map */
-    mve::FloatImage::Ptr depthmap_bilateral_filter (
-        mve::FloatImage::ConstPtr dm, mve::FloatImage::ConstPtr ci,
+    mve::core::FloatImage::Ptr depthmap_bilateral_filter (
+        mve::core::FloatImage::ConstPtr dm, mve::core::FloatImage::ConstPtr ci,
         float sigma = 5, int kernel_size = 5);
 
     /* Run Gauss-Newton Optimization */
     void run_newton_iterations (int num_iters);
 
     /* Householder operations */
-    void get_non_converged_nodes(std::vector<math::Vec2d> const& proj1,
-        std::vector<math::Vec2d> const& proj2,
+    void get_non_converged_nodes(std::vector<mve::math::Vec2d> const& proj1,
+        std::vector<mve::math::Vec2d> const& proj2,
         std::vector<std::size_t> * nodes);
     void fill_node_reprojections(std::vector<char> const& active_nodes,
-        std::vector<std::pair<std::size_t, math::Vec2d>> * proj);
+        std::vector<std::pair<std::size_t, mve::math::Vec2d>> * proj);
     int cut_boundaries (void);
 
     /* Errors and values for patch */
@@ -94,31 +94,31 @@ private:
 private:
     Options const& opts;
 
-    mve::Bundle::ConstPtr bundle;
+    mve::core::Bundle::ConstPtr bundle;
 
     StereoView::Ptr main_view;
-    mve::FloatImage::ConstPtr main_gradients;
-    mve::FloatImage::ConstPtr sgm_depth;
+    mve::core::FloatImage::ConstPtr main_gradients;
+    mve::core::FloatImage::ConstPtr sgm_depth;
 
     std::vector<StereoView::Ptr> const& sub_views;
-    std::vector<math::Matrix3d> Mi;
-    std::vector<math::Vec3d> ti;
+    std::vector<mve::math::Matrix3d> Mi;
+    std::vector<mve::math::Vec3d> ti;
 
     Surface::Ptr surface;
     std::vector<std::vector<std::size_t>> subsurfaces;
     GlobalLighting::Ptr lighting;
 
-    std::vector<math::Vec2d> pixels;
+    std::vector<mve::math::Vec2d> pixels;
     std::vector<std::size_t> pids;
     std::vector<double> depths;
-    std::vector<math::Vec2d> depth_derivatives;
-    std::vector<math::Vec3d> depth_2nd_derivatives;
+    std::vector<mve::math::Vec2d> depth_derivatives;
+    std::vector<mve::math::Vec3d> depth_2nd_derivatives;
 
-    math::Vec2d grad_main;
-    math::Vec2d grad_linear;
-    math::Vec2d grad_sub;
-    math::Vec2d proj;
-    math::Matrix2d jac;
+    mve::math::Vec2d grad_main;
+    mve::math::Vec2d grad_linear;
+    mve::math::Vec2d grad_sub;
+    mve::math::Vec2d proj;
+    mve::math::Matrix2d jac;
 };
 
 /* ------------------------ Implementation ------------------------ */
@@ -134,14 +134,14 @@ DepthOptimizer::DepthOptimizer (StereoView::Ptr main_view,
 }
 
 inline
-mve::FloatImage::Ptr
+mve::core::FloatImage::Ptr
 DepthOptimizer::get_depth (void)
 {
     return this->surface->get_depth_map();
 }
 
 inline
-mve::FloatImage::Ptr
+mve::core::FloatImage::Ptr
 DepthOptimizer::get_normals (void)
 {
     return this->surface->get_normal_map(this->main_view->get_inverse_flen());
@@ -155,10 +155,10 @@ DepthOptimizer::write_debug_depth (std::string const& postfix)
         return;
 
     std::string name = "smvs-L" +
-        util::string::get(this->surface->get_scale()) + postfix;
+        mve::util::string::get(this->surface->get_scale()) + postfix;
     this->main_view->write_depth_to_view(this->surface->get_depth_map(), name);
 }
 
-SMVS_NAMESPACE_END
+} // namespace smvs
 
 #endif /* SMVS_DEPTH_OPTIMIZER_HEADER */

@@ -12,14 +12,14 @@
 #include <vector>
 #include <string>
 
-#include "mve/mesh_io.h"
-#include "mve/mesh_io_ply.h"
-#include "util/arguments.h"
-#include "util/file_system.h"
-#include "util/strings.h"
-#include "util/tokenizer.h"
-#include "util/system.h"
-#include "util/timer.h"
+#include "mve/core/mesh_io.h"
+#include "mve/core/mesh_io_ply.h"
+#include "mve/util/arguments.h"
+#include "mve/util/file_system.h"
+#include "mve/util/strings.h"
+#include "mve/util/tokenizer.h"
+#include "mve/util/system.h"
+#include "mve/util/timer.h"
 
 #include "thread_pool.h"
 #include "mesh_simplifier.h"
@@ -43,7 +43,7 @@ AppSettings
 args_to_settings(int argc, char** argv)
 {
     /* Setup argument parser. */
-    util::Arguments args;
+    mve::util::Arguments args;
     args.set_exit_on_error(true);
     args.set_nonopt_minnum(2);
     args.set_nonopt_maxnum(2);
@@ -62,7 +62,7 @@ args_to_settings(int argc, char** argv)
     conf.out_name = args.get_nth_nonopt(1);
 
     /* Scan arguments. */
-    while (util::ArgResult const* arg = args.next_result())
+    while (mve::util::ArgResult const* arg = args.next_result())
     {
         if (arg->opt == NULL)
             continue;
@@ -88,14 +88,14 @@ args_to_settings(int argc, char** argv)
 int
 main (int argc, char** argv)
 {
-    util::system::register_segfault_handler();
-    util::system::print_build_timestamp("Simplify Mesh");
+    mve::util::system::register_segfault_handler();
+    mve::util::system::print_build_timestamp("Simplify Mesh");
 
     AppSettings conf = args_to_settings(argc, argv);
     std::cout << std::endl;
 
     /* Load meshes */
-    mve::TriangleMesh::Ptr mesh = mve::geom::load_mesh(conf.mesh_name);
+    mve::core::TriangleMesh::Ptr mesh = mve::core::geom::load_mesh(conf.mesh_name);
     
     /* Start processing */
     std::cout << "Processing ... ";
@@ -106,8 +106,8 @@ main (int argc, char** argv)
     std::cout << "Done." << std::endl;
 
     /* Save output */
-    mve::geom::SavePLYOptions opts;
-    mve::geom::save_ply_mesh(mesh, conf.out_name, opts);
+    mve::core::geom::SavePLYOptions opts;
+    mve::core::geom::save_ply_mesh(mesh, conf.out_name, opts);
 
     std::exit(EXIT_SUCCESS);
 }

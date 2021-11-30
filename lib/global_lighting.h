@@ -10,19 +10,19 @@
 #ifndef SMVS_GLOBAL_LIGHTING_HEADER
 #define SMVS_GLOBAL_LIGHTING_HEADER
 
-#include "math/vector.h"
-#include "core/image.h"
+#include "mve/math/vector.h"
+#include "mve/core/image.h"
 
 #include "spherical_harmonics.h"
 #include "defines.h"
 
-SMVS_NAMESPACE_BEGIN
+namespace smvs {
 
 class GlobalLighting
 {
 public:
-    typedef math::Vector<double, 16> Params;
-    typedef math::Vector<double, 16> SHBasis;
+    typedef mve::math::Vector<double, 16> Params;
+    typedef mve::math::Vector<double, 16> SHBasis;
     typedef std::shared_ptr<GlobalLighting> Ptr;
 
 public:
@@ -30,10 +30,10 @@ public:
 
     Params const& get_parameters (void);
 
-    mve::FloatImage::Ptr get_rendered_sphere (int dim) const;
-    mve::FloatImage::Ptr render_normal_map (
-        mve::FloatImage::ConstPtr normals) const;
-    double value_for_normal (math::Vec3d const& normal) const;
+    mve::core::FloatImage::Ptr get_rendered_sphere (int dim) const;
+    mve::core::FloatImage::Ptr render_normal_map (
+        mve::core::FloatImage::ConstPtr normals) const;
+    double value_for_normal (mve::math::Vec3d const& normal) const;
 
 private:
     GlobalLighting (Params const& parameters);
@@ -60,6 +60,6 @@ GlobalLighting::get_parameters (void)
     return this->parameters;
 }
 
-SMVS_NAMESPACE_END
+} // namespace smvs
 
 #endif /* SMVS_GLOBAL_LIGHTING_HEADER */

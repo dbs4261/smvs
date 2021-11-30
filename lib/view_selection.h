@@ -10,11 +10,11 @@
 #ifndef SMVS_VIEW_SELECTION_HEADER
 #define SMVS_VIEW_SELECTION_HEADER
 
-#include "core/scene.h"
+#include "mve/core/scene.h"
 
 #include "defines.h"
 
-SMVS_NAMESPACE_BEGIN
+namespace smvs {
 
 class ViewSelection
 {
@@ -27,29 +27,29 @@ public:
     };
 
 public:
-    ViewSelection (Options const& opts, mve::Scene::ViewList const& views,
-        mve::Bundle::ConstPtr bundle = nullptr);
+    ViewSelection (Options const& opts, mve::core::Scene::ViewList const& views,
+        mve::core::Bundle::ConstPtr bundle = nullptr);
 
-    mve::Scene::ViewList get_neighbors_for_view(std::size_t const view) const;
+    mve::core::Scene::ViewList get_neighbors_for_view(std::size_t const view) const;
 
 private:
-    mve::Scene::ViewList bundle_based_selection(std::size_t const view) const;
-    mve::Scene::ViewList position_based_selection(std::size_t const view) const;
-    mve::Scene::ViewList get_sorted_neighbors(std::size_t const view) const;
+    mve::core::Scene::ViewList bundle_based_selection(std::size_t const view) const;
+    mve::core::Scene::ViewList position_based_selection(std::size_t const view) const;
+    mve::core::Scene::ViewList get_sorted_neighbors(std::size_t const view) const;
 
 private:
     Options const& opts;
-    mve::Scene::ViewList const& views;
-    mve::Bundle::ConstPtr bundle;
+    mve::core::Scene::ViewList const& views;
+    mve::core::Bundle::ConstPtr bundle;
 };
 
 inline
 ViewSelection::ViewSelection (ViewSelection::Options const& opts,
-    mve::Scene::ViewList const& views, mve::Bundle::ConstPtr bundle)
+    mve::core::Scene::ViewList const& views, mve::core::Bundle::ConstPtr bundle)
     : opts(opts), views(views), bundle(bundle)
 {
 }
 
-SMVS_NAMESPACE_END
+} // namespace smvs
 
 #endif /* SMVS_VIEW_SELECTION_HEADER */

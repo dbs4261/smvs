@@ -9,10 +9,10 @@
 
 #include <iostream>
 
-#include "util/timer.h"
-#include "core/image_io.h"
-#include "core/image_tools.h"
-#include "math/matrix_svd.h"
+#include "mve/util/timer.h"
+#include "mve/core/image_io.h"
+#include "mve/core/image_tools.h"
+#include "mve/math/matrix_svd.h"
 
 #include "depth_optimizer.h"
 #include "correspondence.h"
@@ -21,11 +21,11 @@
 #include "sgm_stereo.h"
 #include "gauss_newton_step.h"
 
-SMVS_NAMESPACE_BEGIN
+namespace smvs {
 
 DepthOptimizer::DepthOptimizer (StereoView::Ptr main_view,
     std::vector<StereoView::Ptr> const& sub_views,
-    mve::Bundle::ConstPtr bundle, Options const& opts)
+    mve::core::Bundle::ConstPtr bundle, Options const& opts)
     : opts(opts), bundle(bundle), main_view(main_view), sub_views(sub_views)
     , lighting(nullptr)
 {
@@ -39,7 +39,7 @@ DepthOptimizer::create_initial_surface (void)
         this->main_view->get_height() / 1.7e6) / 2) + 4, 4.0);
     if (this->opts.use_sgm)
     {
-        mve::FloatImage::Ptr init = this->main_view->get_sgm_depth();
+        mve::core::FloatImage::Ptr init = this->main_view->get_sgm_depth();
         init = depthmap_bilateral_filter(init, main_view->get_image());
         if(this->opts.debug_lvl > 1)
             this->main_view->write_depth_to_view(init, "smvs-sgm-filtered");
@@ -59,7 +59,7 @@ DepthOptimizer::optimize (void)
         std::cout << "########### Scale "
             << this->surface->get_scale() << " ###########" << std::endl;
 
-    util::WallTimer scale_timer;
+    mve::util::WallTimer scale_timer;
     this->main_view->set_scale(this->surface->get_scale(),
         this->opts.debug_lvl > 2);
     for (auto view : this->sub_views)
@@ -118,10 +118,10 @@ DepthOptimizer::optimize (void)
         
         if (this->opts.debug_lvl > 1 && this->lighting != nullptr)
         {
-            mve::FloatImage::Ptr shaded = this->lighting->render_normal_map(
+            mve::core::FloatImage::Ptr shaded = this->lighting->render_normal_map(
                 this->get_normals());
             this->main_view->write_image_to_view(shaded, "smvs-shaded");
-            mve::FloatImage::Ptr sphere =
+            mve::core::FloatImage::Ptr sphere =
                 this->lighting->get_rendered_sphere(555);
             this->main_view->write_image_to_view(sphere, "smvs-shaded-sphere");
         }
@@ -138,12 +138,12 @@ DepthOptimizer::optimize (void)
     /* Write final output */
     if (this->opts.debug_lvl > 1 && this->lighting != nullptr)
     {
-        mve::FloatImage::Ptr shaded = this->lighting->render_normal_map(
+        mve::core::FloatImage::Ptr shaded = this->lighting->render_normal_map(
             this->get_normals());
         this->main_view->write_image_to_view(shaded, "smvs-shaded");
-        mve::FloatImage::Ptr sphere = this->lighting->get_rendered_sphere(555);
+        mve::core::FloatImage::Ptr sphere = this->lighting->get_rendered_sphere(555);
         this->main_view->write_image_to_view(sphere, "smvs-shaded-sphere");
-        mve::FloatImage::Ptr albedo =
+        mve::core::FloatImage::Ptr albedo =
             this->main_view->get_linear_image()->duplicate();
         for (int p = 0; p < albedo->get_pixel_amount(); ++p)
             if (shaded->at(p) > 0.0)
@@ -170,8 +170,8 @@ DepthOptimizer::run_newton_iterations (int num_iters)
     SparseMatrix precond;
     std::vector<double> delta;
     std::vector<double> depth_updates;
-    std::vector<std::pair<std::size_t, math::Vec2d>> projections1;
-    std::vector<std::pair<std::size_t, math::Vec2d>> projections2;
+    std::vector<std::pair<std::size_t, mve::math::Vec2d>> projections1;
+    std::vector<std::pair<std::size_t, mve::math::Vec2d>> projections2;
 
     this->main_gradients = this->main_view->get_image_gradients();
 
@@ -225,7 +225,7 @@ DepthOptimizer::run_newton_iterations (int num_iters)
 
             newton_step += 1;
             prev_gradient = gradient;
-            util::WallTimer newton_timer;
+            mve::util::WallTimer newton_timer;
 
             /* construct newton step */
             gauss_newton_step.construct(this->surface, this->subsurfaces,
@@ -372,7 +372,7 @@ DepthOptimizer::cut_boundaries (void)
         patches[patch_id]->fill_values_at_nodes(&pixels, &depths,
             &depth_derivatives);
 
-        math::Matrix3f invproj;
+        mve::math::Matrix3f invproj;
         this->main_view->get_camera().fill_inverse_calibration(*invproj,
             this->main_view->get_width(), this->main_view->get_height());
 
@@ -386,7 +386,7 @@ DepthOptimizer::cut_boundaries (void)
 
         if (iter_first->second + iter_last->second == 3)
             dd_factor *= MATH_SQRT2;
-        math::Vec3f v = invproj * math::Vec3f
+        mve::math::Vec3f v = invproj * mve::math::Vec3f
             ((float)pixels[0][0] + 0.5f, (float)pixels[0][1] + 0.5f, 1.0f);
         double threshold = dd_factor * iter_first->first * invproj[0]
             * this->surface->get_patchsize() / v.norm();
@@ -437,7 +437,7 @@ DepthOptimizer::create_subview_surfaces (void)
     this->subsurfaces.clear();
     this->subsurfaces.resize(patches.size());
 
-    std::vector<mve::FloatImage::Ptr> depth_caches;
+    std::vector<mve::core::FloatImage::Ptr> depth_caches;
     depth_caches.resize(this->sub_views.size());
 
     for (std::size_t sub_id = 0; sub_id < this->sub_views.size(); ++sub_id)
@@ -445,25 +445,25 @@ DepthOptimizer::create_subview_surfaces (void)
         int const sub_width = this->sub_views[sub_id]->get_width();
         int const sub_height = this->sub_views[sub_id]->get_height();
 
-        depth_caches[sub_id] = mve::FloatImage::create(
+        depth_caches[sub_id] = mve::core::FloatImage::create(
             sub_width + 1, sub_height + 1, 1);
         depth_caches[sub_id]->fill(10000.0);
     }
 
     this->pixels.clear();
     this->depths.clear();
-    mve::FloatImage::Ptr depth = this->get_depth();
+    mve::core::FloatImage::Ptr depth = this->get_depth();
     for (int x = 0; x < depth->width(); ++x)
         for (int y = 0; y < depth->height(); ++y)
         {
             if (depth->at(x, y, 0) != 0)
             {
-                pixels.push_back(math::Vec2d(x, y));
+                pixels.push_back(mve::math::Vec2d(x, y));
                 depths.push_back(depth->at(x, y, 0));
             }
             if (this->opts.use_sgm && this->sgm_depth->at(x, y, 0) != 0)
             {
-                pixels.push_back(math::Vec2d(x, y));
+                pixels.push_back(mve::math::Vec2d(x, y));
                 depths.push_back(this->sgm_depth->at(x, y, 0));
             }
         }
@@ -481,7 +481,7 @@ DepthOptimizer::create_subview_surfaces (void)
         {
             C.update(this->Mi[sub_id], this->ti[sub_id],
                 pixels[i][0] + 0.5, pixels[i][1] + 0.5, depths[i]);
-            math::Vec2d proj;
+            mve::math::Vec2d proj;
             C.fill(*proj);
             proj[0] -= 0.5;
             proj[1] -= 0.5;
@@ -519,7 +519,7 @@ DepthOptimizer::create_subview_surfaces (void)
             {
                 Correspondence C(this->Mi[sub_id], this->ti[sub_id],
                     pixels[i][0] + 0.5, pixels[i][1] + 0.5, depths[i]);
-                math::Vec2d proj;
+                mve::math::Vec2d proj;
                 C.fill(*proj);
                 proj[0] -= 0.5;
                 proj[1] -= 0.5;
@@ -542,9 +542,9 @@ DepthOptimizer::create_subview_surfaces (void)
             if (!success)
                 continue;
 
-            std::vector<math::Vec2d> node_coords;
+            std::vector<mve::math::Vec2d> node_coords;
             std::vector<double> node_depths;
-            std::vector<math::Vec2d> node_depths_derivs;
+            std::vector<mve::math::Vec2d> node_depths_derivs;
             patches[patch_id]->fill_values_at_nodes(&node_coords,
                 &node_depths, &node_depths_derivs);
 
@@ -557,7 +557,7 @@ DepthOptimizer::create_subview_surfaces (void)
                 Correspondence C(this->Mi[sub_id], this->ti[sub_id],
                      pixels[i][0] + 0.5, pixels[i][1] + 0.5, depths[i],
                      depth_derivatives[i][0], depth_derivatives[i][1]);
-                math::Matrix2d jac;
+                mve::math::Matrix2d jac;
                 C.fill_jacobian(*jac);
                 /* Find singular values of jacobian */
                 double S[2];
@@ -604,8 +604,8 @@ DepthOptimizer::create_subview_surfaces (void)
 }
 
 void
-DepthOptimizer::get_non_converged_nodes(std::vector<math::Vec2d> const& proj1,
-    std::vector<math::Vec2d> const& proj2, std::vector<std::size_t> * node_ids)
+DepthOptimizer::get_non_converged_nodes(std::vector<mve::math::Vec2d> const& proj1,
+    std::vector<mve::math::Vec2d> const& proj2, std::vector<std::size_t> * node_ids)
 {
     node_ids->clear();
     Surface::NodeList const& nodes = this->surface->get_nodes();
@@ -646,7 +646,7 @@ DepthOptimizer::get_non_converged_nodes(std::vector<math::Vec2d> const& proj1,
 
 void
 DepthOptimizer::fill_node_reprojections(std::vector<char> const& active_nodes,
-    std::vector<std::pair<std::size_t, math::Vec2d>> * proj)
+    std::vector<std::pair<std::size_t, mve::math::Vec2d>> * proj)
 {
     proj->clear();
     Surface::PatchList const& patches = this->surface->get_patches();
@@ -668,7 +668,7 @@ DepthOptimizer::fill_node_reprojections(std::vector<char> const& active_nodes,
                 std::size_t sub_id = this->subsurfaces[patch_id][j];
                 Correspondence C(this->Mi[sub_id], this->ti[sub_id],
                     pixels[i][0], pixels[i][1], depths[i]);
-                math::Vec2d projection;
+                mve::math::Vec2d projection;
                 C.fill(*projection);
                 for (std::size_t n = 0; n < 4; ++n)
                     proj->emplace_back(node_ids[n], projection);
@@ -681,12 +681,12 @@ DepthOptimizer::prepare_correspondences (void)
 {
     this->Mi.resize(this->sub_views.size());
     this->ti.resize(this->sub_views.size());
-    mve::CameraInfo main_cam = this->main_view->get_camera();
+    mve::core::CameraInfo main_cam = this->main_view->get_camera();
     for (std::size_t i = 0; i < this->sub_views.size(); ++i)
     {
-        mve::CameraInfo  sub_cam = this->sub_views[i]->get_camera();
-        math::Matrix3f M;
-        math::Vec3f t;
+        mve::core::CameraInfo  sub_cam = this->sub_views[i]->get_camera();
+        mve::math::Matrix3f M;
+        mve::math::Vec3f t;
         main_cam.fill_reprojection(sub_cam, this->main_view->get_width(),
             this->main_view->get_height(), this->sub_views[i]->get_width(),
             this->sub_views[i]->get_height(), *M, *t);
@@ -702,7 +702,7 @@ void
 DepthOptimizer::reproject_neighbor (std::size_t neighbor)
 {
     StereoView::Ptr neighbor_view = this->sub_views[neighbor];
-    mve::FloatImage::Ptr debug = this->main_view->get_debug_image();
+    mve::core::FloatImage::Ptr debug = this->main_view->get_debug_image();
     debug->fill(0);
 
     for (std::size_t patch_id = 0;
@@ -720,7 +720,7 @@ DepthOptimizer::reproject_neighbor (std::size_t neighbor)
             for (std::size_t j = 0; j < this->subsurfaces[patch_id].size(); ++j)
             {
                 std::size_t sub_id = this->subsurfaces[patch_id][j];
-                mve::FloatImage::ConstPtr subimage =
+                mve::core::FloatImage::ConstPtr subimage =
                     this->sub_views[sub_id]->get_image();
 
                 Correspondence C(this->Mi[sub_id], this->ti[sub_id],
@@ -764,7 +764,7 @@ DepthOptimizer::mse_for_patch (std::size_t patch_id)
         for (std::size_t j = 0; j < this->subsurfaces[patch_id].size(); ++j)
         {
             std::size_t sub_id = this->subsurfaces[patch_id][j];
-            mve::FloatImage::ConstPtr sub_gradients =
+            mve::core::FloatImage::ConstPtr sub_gradients =
                 this->sub_views[sub_id]->get_image_gradients();
 
             Correspondence C(this->Mi[sub_id], this->ti[sub_id],
@@ -779,7 +779,7 @@ DepthOptimizer::mse_for_patch (std::size_t patch_id)
             grad_sub[0] = sub_gradients->linear_at(proj[0], proj[1], 0);
             grad_sub[1] = sub_gradients->linear_at(proj[0], proj[1], 1);
 
-            math::Vec2d diff = this->grad_main - (jac * grad_sub);
+            mve::math::Vec2d diff = this->grad_main - (jac * grad_sub);
             error += diff.norm();
             counter += 1.0;
         }
@@ -794,17 +794,17 @@ DepthOptimizer::ncc_for_patch (std::size_t patch_id, std::size_t sub_id)
 {
     Surface::Patch::Ptr patch = this->surface->get_patches()[patch_id];
 
-    mve::FloatImage::ConstPtr main_image =
+    mve::core::FloatImage::ConstPtr main_image =
         this->main_view->get_image();
-    mve::FloatImage::ConstPtr sub_image =
+    mve::core::FloatImage::ConstPtr sub_image =
         this->sub_views[sub_id]->get_image();
 
     /* Get corners and pixels */
-    std::vector<math::Vec2d> corners;
+    std::vector<mve::math::Vec2d> corners;
     std::vector<double> corner_depths;
     patch->fill_values_at_nodes(&corners, &corner_depths);
-    math::Vec2d min = corners[0];
-    math::Vec2d max = corners[3];
+    mve::math::Vec2d min = corners[0];
+    mve::math::Vec2d max = corners[3];
     patch->fill_values_at_pixels(&pixels, &depths);
 
     /* Add boundary */
@@ -861,11 +861,11 @@ DepthOptimizer::ncc_for_patch (std::size_t patch_id, std::size_t sub_id)
     values0.resize(pixels.size() * 3);
     values1.resize(pixels.size() * 3);
 
-    math::Vec3d means0(0,0,0);
-    math::Vec3d means1(0,0,0);
-    math::Vec3d counter(0,0,0);
-    math::Vec3d color_main;
-    math::Vec3d color_sub;
+    mve::math::Vec3d means0(0,0,0);
+    mve::math::Vec3d means1(0,0,0);
+    mve::math::Vec3d counter(0,0,0);
+    mve::math::Vec3d color_main;
+    mve::math::Vec3d color_sub;
     
     for (std::size_t i = 0; i < pixels.size(); ++i)
     {
@@ -914,24 +914,24 @@ DepthOptimizer::ncc_for_patch (std::size_t patch_id, std::size_t sub_id)
 double
 DepthOptimizer::tex_score_for_patch (std::size_t patch_id)
 {
-    mve::FloatImage::ConstPtr main_image =
+    mve::core::FloatImage::ConstPtr main_image =
         this->main_view->get_image();
 
     std::vector<double> errors;
 
     Surface::Patch::Ptr patch = this->surface->get_patches()[patch_id];
-    std::vector<math::Vec2d> pixels;
+    std::vector<mve::math::Vec2d> pixels;
     std::vector<double> depths;
     patch->fill_values_at_pixels(&pixels, &depths);
 
     DenseVector values;
     values.resize(pixels.size() * 3);
 
-    math::Vec3d means(0, 0, 0);
+    mve::math::Vec3d means(0, 0, 0);
     double counter = 0;
     for (std::size_t i = 0; i < pixels.size(); ++i)
     {
-        math::Vec3d color_main;
+        mve::math::Vec3d color_main;
         color_main[0] = main_image->at(pixels[i][0], pixels[i][1], 0);
         color_main[1] = main_image->at(pixels[i][0], pixels[i][1], 1);
         color_main[2] = main_image->at(pixels[i][0], pixels[i][1], 2);
@@ -954,16 +954,16 @@ DepthOptimizer::tex_score_for_patch (std::size_t patch_id)
     return score / pixels.size();
 }
 
-mve::FloatImage::Ptr
-DepthOptimizer::depthmap_bilateral_filter(mve::FloatImage::ConstPtr dm,
-    mve::FloatImage::ConstPtr ci, float sigma, int kernel_size)
+mve::core::FloatImage::Ptr
+DepthOptimizer::depthmap_bilateral_filter(mve::core::FloatImage::ConstPtr dm,
+    mve::core::FloatImage::ConstPtr ci, float sigma, int kernel_size)
 {
     int const dm_w(dm->width());
     int const dm_h(dm->height());
 
     int const w = ci->width();
     int const h = ci->height();
-    mve::FloatImage::Ptr out = mve::FloatImage::create(w, h, 1);
+    mve::core::FloatImage::Ptr out = mve::core::FloatImage::create(w, h, 1);
     out->fill(0);
 
     float const scale_x = static_cast<float>(dm_w) / static_cast<float>(w);
@@ -972,15 +972,15 @@ DepthOptimizer::depthmap_bilateral_filter(mve::FloatImage::ConstPtr dm,
     for (int y = 0; y < h; ++y)
         for (int x = 0; x < w; ++x)
         {
-            math::Accum<float> accum(0.0f);
+            mve::math::Accum<float> accum(0.0f);
             for (int ky = -kernel_size; ky <= kernel_size; ++ky)
                 for (int kx = -kernel_size; kx <= kernel_size; ++kx)
                 {
-                    int const ci_x = math::clamp(x + kx, 0, w - 1);
-                    int const ci_y = math::clamp(y + ky, 0, h - 1);
-                    int const dm_x = math::clamp(scale_x * ci_x, 0.f,
+                    int const ci_x = mve::math::clamp(x + kx, 0, w - 1);
+                    int const ci_y = mve::math::clamp(y + ky, 0, h - 1);
+                    int const dm_x = mve::math::clamp(scale_x * ci_x, 0.f,
                         static_cast<float>(dm_w) - 1.f);
-                    int const dm_y = math::clamp(scale_y * ci_y, 0.f,
+                    int const dm_y = mve::math::clamp(scale_y * ci_y, 0.f,
                         static_cast<float>(dm_h) - 1.f);
 
                     if(dm->at(dm_x, dm_y, 0) == 0.0f)
@@ -988,11 +988,11 @@ DepthOptimizer::depthmap_bilateral_filter(mve::FloatImage::ConstPtr dm,
 
                     float weight(1.0f);
                     /* spatial weight */
-                    weight *= math::gaussian_2d((float)kx, (float)ky,
+                    weight *= mve::math::gaussian_2d((float)kx, (float)ky,
                         sigma, sigma);
                     /* depth value difference weight */
                     for (int c = 0; c < ci->channels(); ++c)
-                        weight *= math::gaussian(ci->at(ci_x, ci_y, c)
+                        weight *= mve::math::gaussian(ci->at(ci_x, ci_y, c)
                             - ci->at(x, y, c), 0.1f);
 
                     accum.add(dm->at(dm_x, dm_y, 0), weight);
@@ -1003,4 +1003,4 @@ DepthOptimizer::depthmap_bilateral_filter(mve::FloatImage::ConstPtr dm,
     return out;
 }
 
-SMVS_NAMESPACE_END
+} // namespace smvs

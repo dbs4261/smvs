@@ -15,14 +15,14 @@
 #   include <popcntintrin.h> // for hamming distance
 #endif
 
-#include "core/depthmap.h"
-#include "core/image_tools.h"
-#include "util/timer.h"
+#include "mve/core/depthmap.h"
+#include "mve/core/image_tools.h"
+#include "mve/util/timer.h"
 
 #include "sgm_stereo.h"
 #include "correspondence.h"
 
-SMVS_NAMESPACE_BEGIN
+namespace smvs {
 
 SGMStereo::SGMStereo (Options const& opts, StereoView::Ptr main,
     StereoView::Ptr neighbor)
@@ -30,12 +30,12 @@ SGMStereo::SGMStereo (Options const& opts, StereoView::Ptr main,
 {
     this->main_image = this->main->get_byte_image();
     for (int i = 0; i < this->opts.scale; ++i)
-        this->main_image = mve::image::rescale_half_size<uint8_t>(
+        this->main_image = mve::core::image::rescale_half_size<uint8_t>(
             this->main_image);
 
     this->neighbor_image = this->neighbor->get_byte_image();
     for (int i = 0; i < this->opts.scale; ++i)
-        this->neighbor_image = mve::image::rescale_half_size<uint8_t>(
+        this->neighbor_image = mve::core::image::rescale_half_size<uint8_t>(
             this->neighbor_image);
 
     this->cost_updates.resize(opts.num_steps);
@@ -43,9 +43,9 @@ SGMStereo::SGMStereo (Options const& opts, StereoView::Ptr main,
     this->mins.resize(opts.num_steps);
 }
 
-mve::FloatImage::Ptr
+mve::core::FloatImage::Ptr
 SGMStereo::reconstruct (SGMStereo::Options sgm_opts, StereoView::Ptr main_view,
-    StereoView::Ptr neighbor, mve::Bundle::ConstPtr bundle)
+    StereoView::Ptr neighbor, mve::core::Bundle::ConstPtr bundle)
 {
     float depth_range[2];
     depth_range[0] = sgm_opts.min_depth;
@@ -54,17 +54,17 @@ SGMStereo::reconstruct (SGMStereo::Options sgm_opts, StereoView::Ptr main_view,
     if (bundle != nullptr && sgm_opts.max_depth == 0.0)
         fill_depth_range_for_view(bundle, main_view, depth_range);
     SGMStereo sgm1(sgm_opts, main_view, neighbor);
-    mve::FloatImage::Ptr d_main = sgm1.run_sgm(depth_range[0], depth_range[1]);
+    mve::core::FloatImage::Ptr d_main = sgm1.run_sgm(depth_range[0], depth_range[1]);
 
     if (bundle != nullptr && sgm_opts.max_depth == 0.0)
         fill_depth_range_for_view(bundle, neighbor, depth_range);
     SGMStereo sgm2(sgm_opts, neighbor, main_view);
-    mve::FloatImage::Ptr d_neig = sgm2.run_sgm(depth_range[0], depth_range[1]);
+    mve::core::FloatImage::Ptr d_neig = sgm2.run_sgm(depth_range[0], depth_range[1]);
 
-    mve::CameraInfo const &main_cam = main_view->get_camera();
-    mve::CameraInfo const &neighbor_cam = neighbor->get_camera();
-    math::Matrix3f M;
-    math::Vec3f t;
+    mve::core::CameraInfo const &main_cam = main_view->get_camera();
+    mve::core::CameraInfo const &neighbor_cam = neighbor->get_camera();
+    mve::math::Matrix3f M;
+    mve::math::Vec3f t;
     main_cam.fill_reprojection(neighbor_cam, d_main->width(),
         d_main->height(), d_neig->width(), d_neig->height(), *M, *t);
 
@@ -75,7 +75,7 @@ SGMStereo::reconstruct (SGMStereo::Options sgm_opts, StereoView::Ptr main_view,
             if (d_main->at(x, y, 0) == 0)
                 continue;
             Correspondence c(M, t, x, y, d_main->at(x, y, 0));
-            math::Vec2d coords;
+            mve::math::Vec2d coords;
             c.fill(*coords);
             if (coords[0] < cut || coords[0] >= d_neig->width() - cut
                 || coords[1] < cut || coords[1] >= d_neig->height() - cut)
@@ -95,14 +95,14 @@ SGMStereo::reconstruct (SGMStereo::Options sgm_opts, StereoView::Ptr main_view,
     return d_main;
 }
 
-mve::FloatImage::Ptr
+mve::core::FloatImage::Ptr
 SGMStereo::run_sgm (float min_depth, float max_depth)
 {
     if (this->opts.debug_lvl > 1)
         std::cout << "Running SGM width depth range: [" << min_depth
             << " ; " << max_depth << "]" << std::endl;
 
-    util::WallTimer timer;
+    mve::util::WallTimer timer;
 
     /* Create Census cost volume */
     this->create_cost_volume(min_depth, max_depth, this->opts.num_steps);
@@ -119,13 +119,13 @@ SGMStereo::run_sgm (float min_depth, float max_depth)
             << timer.get_elapsed_sec() << "s" << std::endl;
 
     /* Extract final depth */
-    mve::FloatImage::Ptr depth = this->depth_from_sgm_volume();
+    mve::core::FloatImage::Ptr depth = this->depth_from_sgm_volume();
     return depth;
 }
 
 void
-SGMStereo::census_filter (mve::ByteImage::ConstPtr image,
-    mve::Image<uint64_t>::Ptr filtered)
+SGMStereo::census_filter (mve::core::ByteImage::ConstPtr image,
+    mve::core::Image<uint64_t>::Ptr filtered)
 {
     filtered->fill(0);
     for (int x = 4; x < image->width() - 5; ++x)
@@ -149,12 +149,12 @@ SGMStereo::census_filter (mve::ByteImage::ConstPtr image,
 
 void
 SGMStereo::warped_neighbors_for_depth (std::vector<float> const& depths,
-    mve::ByteImage::Ptr image)
+    mve::core::ByteImage::Ptr image)
 {
-    math::Matrix3f M;
-    math::Vec3f t;
+    mve::math::Matrix3f M;
+    mve::math::Vec3f t;
 
-    mve::CameraInfo n_cam = this->neighbor->get_camera();
+    mve::core::CameraInfo n_cam = this->neighbor->get_camera();
     this->main->get_camera().fill_reprojection(n_cam,
         this->main_image->width(), this->main_image->height(),
         this->neighbor_image->width(), this->neighbor_image->height(), *M, *t);
@@ -163,12 +163,12 @@ SGMStereo::warped_neighbors_for_depth (std::vector<float> const& depths,
     for (int x = 0; x < image->width(); ++x)
         for (int y = 0; y < image->height(); ++y)
         {
-            math::Vec3f target_pixel(0.5f + x, 0.5f + y, 1.f);
+            mve::math::Vec3f target_pixel(0.5f + x, 0.5f + y, 1.f);
             target_pixel = M * target_pixel;
 
             for (int d = 0; d < image->channels(); ++d)
             {
-                math::Vec3f projected = target_pixel * depths[d] + t;
+                mve::math::Vec3f projected = target_pixel * depths[d] + t;
 
                 if (projected[2] < 0)
                     continue;
@@ -202,11 +202,11 @@ SGMStereo::create_cost_volume (float min_depth, float max_depth, int num_steps)
         inv_depth += increment;
     }
 
-    mve::ByteImage::Ptr n_warped = mve::ByteImage::create(
+    mve::core::ByteImage::Ptr n_warped = mve::core::ByteImage::create(
         this->main_image->width(), this->main_image->height(), num_steps);
-    mve::Image<uint64_t>::Ptr n_warped_census = mve::Image<uint64_t>::create(
+    mve::core::Image<uint64_t>::Ptr n_warped_census = mve::core::Image<uint64_t>::create(
         n_warped->width(), n_warped->height(), num_steps);
-    mve::Image<uint64_t>::Ptr main_census = mve::Image<uint64_t>::create(
+    mve::core::Image<uint64_t>::Ptr main_census = mve::core::Image<uint64_t>::create(
         main_image->width(), main_image->height(), 1);
     this->census_filter(main_image, main_census);
 
@@ -215,7 +215,7 @@ SGMStereo::create_cost_volume (float min_depth, float max_depth, int num_steps)
         main_census->height() * num_steps;
     this->sse_cost_volume.resize(volume_size, 255);
 #else
-    this->cost_volume = mve::ByteImage::create(
+    this->cost_volume = mve::core::ByteImage::create(
         main_census->width(), main_census->height(), num_steps);
         this->cost_volume->fill(255);
 #endif
@@ -243,10 +243,10 @@ SGMStereo::create_cost_volume (float min_depth, float max_depth, int num_steps)
     }
 }
 
-mve::FloatImage::Ptr
+mve::core::FloatImage::Ptr
 SGMStereo::depth_from_cost_volume (void)
 {
-    mve::FloatImage::Ptr depthmap = mve::FloatImage::create(
+    mve::core::FloatImage::Ptr depthmap = mve::core::FloatImage::create(
         this->main->get_width(), this->main->get_height(), 1);
 
     for (int y = 0, p = 0; y < depthmap->height(); ++y)
@@ -271,10 +271,10 @@ SGMStereo::depth_from_cost_volume (void)
     return depthmap;
 }
 
-mve::FloatImage::Ptr
+mve::core::FloatImage::Ptr
 SGMStereo::depth_from_sgm_volume (void)
 {
-    mve::FloatImage::Ptr depthmap = mve::FloatImage::create(
+    mve::core::FloatImage::Ptr depthmap = mve::core::FloatImage::create(
         this->main_image->width(), this->main_image->height(), 1);
 
     int const num_steps = this->opts.num_steps;
@@ -307,7 +307,7 @@ SGMStereo::depth_from_sgm_volume (void)
 
 
 void
-SGMStereo::fill_path_cost(int x, int y, int px, int py, mve::RawImage::Ptr path)
+SGMStereo::fill_path_cost(int x, int y, int px, int py, mve::core::RawImage::Ptr path)
 {
     int const num_steps = path->channels();
 
@@ -360,7 +360,7 @@ SGMStereo::sse_reduction_min (uint16_t * data, std::size_t size)
 
 void
 SGMStereo::fill_path_cost_sse (int base, int pbase,
-        util::AlignedMemory<uint16_t> * path)
+        mve::util::AlignedMemory<uint16_t> * path)
 {
     int const d_stride = this->opts.num_steps;
     uint16_t const penalty1 = this->opts.penalty1;
@@ -406,7 +406,7 @@ SGMStereo::fill_path_cost_sse (int base, int pbase,
 }
 
 void
-SGMStereo::copy_cost_and_add_to_sgm(util::AlignedMemory<uint16_t> *local_volume,
+SGMStereo::copy_cost_and_add_to_sgm(mve::util::AlignedMemory<uint16_t> *local_volume,
     int base)
 {
     int const d_stride = this->opts.num_steps;
@@ -437,20 +437,20 @@ SGMStereo::aggregate_sgm_costs (void)
     int const y_stride = this->main_image->width();
     this->sse_sgm_volume.resize(this->sse_cost_volume.size(), 0);
     this->mins.resize(8);
-    util::AlignedMemory<uint16_t> sse_local_volume(
+    mve::util::AlignedMemory<uint16_t> sse_local_volume(
         this->sse_cost_volume.size(), 0);
-    util::AlignedMemory<uint16_t> sse_local_volume_d1(
+    mve::util::AlignedMemory<uint16_t> sse_local_volume_d1(
         this->sse_cost_volume.size(), 0);
-    util::AlignedMemory<uint16_t> sse_local_volume_d2(
+    mve::util::AlignedMemory<uint16_t> sse_local_volume_d2(
         this->sse_cost_volume.size(), 0);
 #else
     int const num_steps = this->cost_volume->channels();
-    this->sgm_volume = mve::RawImage::create(width, height, num_steps);
+    this->sgm_volume = mve::core::RawImage::create(width, height, num_steps);
     this->sgm_volume->fill(0);
 
-    mve::RawImage::Ptr local_volume = this->sgm_volume->duplicate();
-    mve::RawImage::Ptr local_volume_diag1 = this->sgm_volume->duplicate();
-    mve::RawImage::Ptr local_volume_diag2 = this->sgm_volume->duplicate();
+    mve::core::RawImage::Ptr local_volume = this->sgm_volume->duplicate();
+    mve::core::RawImage::Ptr local_volume_diag1 = this->sgm_volume->duplicate();
+    mve::core::RawImage::Ptr local_volume_diag2 = this->sgm_volume->duplicate();
 #endif
 
     /* process left-to-right */
@@ -667,32 +667,32 @@ SGMStereo::aggregate_sgm_costs (void)
 }
 
 void
-SGMStereo::fill_depth_range_for_view (mve::Bundle::ConstPtr bundle,
+SGMStereo::fill_depth_range_for_view (mve::core::Bundle::ConstPtr bundle,
     StereoView::Ptr view, float * range)
 {
     std::vector<float> depth_values;
     int const width = view->get_width();
     int const height = view->get_height();
 
-    mve::CameraInfo const& cam = view->get_camera();
+    mve::core::CameraInfo const& cam = view->get_camera();
     int const view_id = view->get_view_id();
-    math::Matrix3f rot(cam.rot);
-    math::Vec3f trans(cam.trans);
+    mve::math::Matrix3f rot(cam.rot);
+    mve::math::Vec3f trans(cam.trans);
     float flen = cam.flen;
 
     double const fwidth2 = static_cast<double>(width) / 2.0;
     double const fheight2 = static_cast<double>(height) / 2.0;
     double const fnorm = static_cast<double>(std::max(width, height));
 
-    mve::Bundle::Features const& features = bundle->get_features();
+    mve::core::Bundle::Features const& features = bundle->get_features();
     for (std::size_t j = 0; j < features.size(); ++j)
     {
-        mve::Bundle::Feature3D const& feat = features[j];
+        mve::core::Bundle::Feature3D const& feat = features[j];
         for (std::size_t k = 0; k < feat.refs.size(); ++k)
             if (feat.refs[k].view_id == view_id)
             {
-                math::Vec3f fpos(feat.pos);
-                math::Vec3f proj = rot * fpos + trans;
+                mve::math::Vec3f fpos(feat.pos);
+                mve::math::Vec3f proj = rot * fpos + trans;
                 float const depth = proj[2];
                 proj[0] = proj[0] * flen / proj[2];
                 proj[1] = proj[1] * flen / proj[2];
@@ -719,4 +719,4 @@ SGMStereo::fill_depth_range_for_view (mve::Bundle::ConstPtr bundle,
     }
 }
 
-SMVS_NAMESPACE_END
+} // namespace smvs

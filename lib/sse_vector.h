@@ -12,11 +12,11 @@
 
 #include <cmath>
 
-#include "util/aligned_memory.h"
+#include "mve/util/aligned_memory.h"
 
 #include "defines.h"
 
-SMVS_NAMESPACE_BEGIN
+namespace smvs {
 
 class SSEVector
 {
@@ -52,7 +52,7 @@ public:
     SSEVector multiply_sub (SSEVector const& rhs, double const rhs_d) const;
 
 private:
-    util::AlignedMemory<double> values;
+    mve::util::AlignedMemory<double> values;
 };
 
 
@@ -78,7 +78,7 @@ SSEVector::fill (double const& value)
 inline void
 SSEVector::clear (void)
 {
-    this->values = util::AlignedMemory<double>(0);
+    this->values = mve::util::AlignedMemory<double>(0);
 }
 
 inline std::size_t
@@ -148,6 +148,6 @@ SSEVector::square_norm (void) const
     return this->dot(*this);
 }
 
-SMVS_NAMESPACE_END
+} // namespace smvs
 
 #endif /* SSE_VECTOR_HEADER */

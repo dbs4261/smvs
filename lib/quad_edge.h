@@ -12,11 +12,11 @@
 
 #include <memory>
 
-#include "math/vector.h"
+#include "mve/math/vector.h"
 
 #include "defines.h"
 
-SMVS_NAMESPACE_BEGIN
+namespace smvs {
 
 /*
  * Edge and QuadEdge datastructure based on:
@@ -251,6 +251,6 @@ Edge::splice(Edge::Ptr a, Edge::Ptr b)
     beta->next = alpha_o_next;
 }
 
-SMVS_NAMESPACE_END
+} // namespace smvs
 
 #endif /* SMVS_QUAD_EDGE_HEADER */

@@ -14,7 +14,7 @@
 
 #define ENABLE_SSE_VECTOR 1
 
-SMVS_NAMESPACE_BEGIN
+namespace smvs {
 
 double
 SSEVector::dot (SSEVector const& rhs) const
@@ -212,4 +212,4 @@ SSEVector::negate_self (void)
     return *this;
 }
 
-SMVS_NAMESPACE_END
+} // namespace smvs

@@ -12,13 +12,13 @@
 
 #include <queue>
 
-#include "core/mesh.h"
-#include "core/mesh_info.h"
-#include "math/matrix.h"
+#include "mve/core/mesh.h"
+#include "mve/core/mesh_info.h"
+#include "mve/math/matrix.h"
 
 #include "defines.h"
 
-SMVS_NAMESPACE_BEGIN
+namespace smvs {
 
 /* 
  * Simplifies a triangle mesh to a given percent of vertices using
@@ -27,10 +27,10 @@ SMVS_NAMESPACE_BEGIN
 class MeshSimplifier
 {
 public:
-    MeshSimplifier (mve::TriangleMesh::ConstPtr mesh);
+    MeshSimplifier (mve::core::TriangleMesh::ConstPtr mesh);
 
     /* Simplify the mesh to given percentage (e.g. 30% means 70% are removed) */
-    mve::TriangleMesh::Ptr get_simplified (float percent);
+    mve::core::TriangleMesh::Ptr get_simplified (float percent);
 
 private:
     struct SimplifyEdge
@@ -38,8 +38,8 @@ private:
         double cost;
         std::size_t v1;
         std::size_t v2;
-        math::Vec3d new_vert;
-        math::Matrix4d quadric;
+        mve::math::Vec3d new_vert;
+        mve::math::Matrix4d quadric;
 
         bool operator > (SimplifyEdge const& rhs) const
         {
@@ -53,22 +53,22 @@ private:
     void fill_queue (void);
 
 private:
-    mve::TriangleMesh::ConstPtr input_mesh;
-    mve::TriangleMesh::Ptr mesh;
-    mve::MeshInfo mesh_info;
-    std::vector<math::Matrix4d> quadrics;
+    mve::core::TriangleMesh::ConstPtr input_mesh;
+    mve::core::TriangleMesh::Ptr mesh;
+    mve::core::MeshInfo mesh_info;
+    std::vector<mve::math::Matrix4d> quadrics;
 
     std::priority_queue<SimplifyEdge, std::vector<SimplifyEdge>,
         std::greater<SimplifyEdge>> removal_queue;
 };
 
 inline
-MeshSimplifier::MeshSimplifier (mve::TriangleMesh::ConstPtr mesh)
+MeshSimplifier::MeshSimplifier (mve::core::TriangleMesh::ConstPtr mesh)
     : input_mesh(mesh)
     , mesh_info(mesh)
 {
 }
 
-SMVS_NAMESPACE_END
+} // namespace smvs
 
 #endif /* SMVS_MESH_SIMPLIFY_HEADER */

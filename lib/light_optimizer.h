@@ -15,20 +15,20 @@
 
 #include "defines.h"
 
-SMVS_NAMESPACE_BEGIN
+namespace smvs {
 
 class LightOptimizer
 {
 public:
     LightOptimizer(Surface::Ptr surface, StereoView::Ptr view);
 
-    GlobalLighting::Ptr fit_lighting_to_image (mve::FloatImage::ConstPtr image);
+    GlobalLighting::Ptr fit_lighting_to_image (mve::core::FloatImage::ConstPtr image);
 
 private:
     Surface::Ptr surface;
     StereoView::Ptr view;
 };
 
-SMVS_NAMESPACE_END
+} // namespace smvs
 
 #endif /* SMVS_LIGHT_OPTIMIZER_HEADER */

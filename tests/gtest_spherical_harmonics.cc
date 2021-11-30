@@ -16,14 +16,14 @@
 
 TEST(SphericalHarmonicsTest, Derivatives4)
 {
-    math::Vec3d normal(0.2, 0.3, 0.4);
+    mve::math::Vec3d normal(0.2, 0.3, 0.4);
     normal.normalize();
 
-    math::Vector<double, 16> base_values;
+    mve::math::Vector<double, 16> base_values;
     smvs::sh::evaluate_4_band(*normal, *base_values);
 
     double delta = 1e-7;
-    math::Vector<double, 16> test_values;
+    mve::math::Vector<double, 16> test_values;
 
     double analytic_deriv[48];
     smvs::sh::derivative_4_band(*normal, analytic_deriv);

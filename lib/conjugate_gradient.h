@@ -12,7 +12,7 @@
 
 #include "sse_vector.h"
 
-SMVS_NAMESPACE_BEGIN
+namespace smvs {
 
 class ConjugateGradient
 {
@@ -201,6 +201,6 @@ ConjugateGradient::solve(Functor const& A, Vector const& b, Vector* x,
     return this->status;
 }
 
-SMVS_NAMESPACE_END
+} // namespace smvs
 
 #endif /* SMVS_CONJUGATE_GRADIENT_HEADER */

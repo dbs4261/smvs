@@ -12,7 +12,7 @@
 
 #include <iostream>
 
-SMVS_NAMESPACE_BEGIN
+namespace smvs {
 
 /** 
  * Combines Matrix L and diagonal vector D to LDL = L*D*L^T
@@ -91,6 +91,6 @@ ldl_inverse(T * A, int const size)
     delete[] D;
 }
 
-SMVS_NAMESPACE_END
+} // namespace smvs
 
 #endif /* LDL_DECOMPOSITION_HEADER */

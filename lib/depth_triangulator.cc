@@ -7,24 +7,24 @@
  * of the BSD 3-Clause license. See the LICENSE.txt file for details.
  */
 
-#include "core/depthmap.h"
-#include "core/image_tools.h"
-#include "core/mesh_io.h"
-#include "core/mesh_tools.h"
+#include "mve/core/depthmap.h"
+#include "mve/core/image_tools.h"
+#include "mve/core/mesh_io.h"
+#include "mve/core/mesh_tools.h"
 
 #include "depth_triangulator.h"
 
-SMVS_NAMESPACE_BEGIN
+namespace smvs {
 
-mve::TriangleMesh::Ptr
+mve::core::TriangleMesh::Ptr
 DepthTriangulator::full_triangulation (void)
 {
-    mve::TriangleMesh::Ptr mesh = mve::geom::depthmap_triangulate(
+    mve::core::TriangleMesh::Ptr mesh = mve::core::geom::depthmap_triangulate(
         this->depth_map, this->color, this->camera);
     return mesh;
 }
 
-mve::TriangleMesh::Ptr
+mve::core::TriangleMesh::Ptr
 DepthTriangulator::approximate_triangulation (int max_vertices,
     double max_error)
 {
@@ -32,7 +32,7 @@ DepthTriangulator::approximate_triangulation (int max_vertices,
         max_vertices = this->depth_map->get_pixel_amount() / 40;
 
     float dm_min, dm_max;
-    mve::image::find_min_max_value(this->depth_map, &dm_min, &dm_max);
+    mve::core::image::find_min_max_value(this->depth_map, &dm_min, &dm_max);
     float dm_avg = 0;
     float counter = 0;
     for (float const* ptr = this->depth_map->begin();
@@ -49,16 +49,16 @@ DepthTriangulator::approximate_triangulation (int max_vertices,
     int const max_x = this->depth_map->width() - 1;
     int const max_y = this->depth_map->height() - 1;
 
-    math::Vec3d bot_left (-1, -1, dm_max);
+    mve::math::Vec3d bot_left (-1, -1, dm_max);
     if (this->depth_map->at(0, 0, 0) > 0)
         bot_left[2] = this->depth_map->at(0, 0, 0);
-    math::Vec3d bot_right (max_x + 1, -1, dm_max);
+    mve::math::Vec3d bot_right (max_x + 1, -1, dm_max);
     if (this->depth_map->at(max_x, 0, 0) > 0)
         bot_right[2] = this->depth_map->at(max_x, 0, 0);
-    math::Vec3d top_left (-1 , max_y + 1, dm_max);
+    mve::math::Vec3d top_left (-1 , max_y + 1, dm_max);
     if (this->depth_map->at(0, max_y, 0) > 0)
         top_left[2] = this->depth_map->at(0, max_y, 0);
-    math::Vec3d top_right(max_x + 1, max_y + 1, dm_max);
+    mve::math::Vec3d top_right(max_x + 1, max_y + 1, dm_max);
     if (this->depth_map->at(max_x, max_y, 0) > 0)
         top_right[2] = this->depth_map->at(max_x, max_y, 0);
 
@@ -102,33 +102,33 @@ DepthTriangulator::approximate_triangulation (int max_vertices,
             } else
             /* Update existing triangle */
             {
-                this->triangles[id].v1 = math::Vec3d(triangle_vertices);
-                this->triangles[id].v2 = math::Vec3d(triangle_vertices + 3);
-                this->triangles[id].v3 = math::Vec3d(triangle_vertices + 6);
+                this->triangles[id].v1 = mve::math::Vec3d(triangle_vertices);
+                this->triangles[id].v2 = mve::math::Vec3d(triangle_vertices + 3);
+                this->triangles[id].v3 = mve::math::Vec3d(triangle_vertices + 6);
             }
             this->scan_triangle(id);
         }
     }
 
     /* Get Mesh, clean, transform, and return */
-    mve::TriangleMesh::Ptr mesh = delaunay.get_mesh();
+    mve::core::TriangleMesh::Ptr mesh = delaunay.get_mesh();
     std::vector<bool> delete_list(mesh->get_vertices().size(), false);
     delete_list[0] = delete_list[1] = delete_list[2] = delete_list[3] = true;
     mesh->delete_vertices_fix_faces(delete_list);
-    math::Matrix3f invproj;
+    mve::math::Matrix3f invproj;
     this->camera.fill_inverse_calibration(*invproj,
         this->depth_map->width(), this->depth_map->height());
 
-    mve::TriangleMesh::VertexList & vertices = mesh->get_vertices();
+    mve::core::TriangleMesh::VertexList & vertices = mesh->get_vertices();
 
     /* Add vertex colors if color image exists */
     if (this->color != nullptr)
     {
-        mve::TriangleMesh::ColorList & vcolors = mesh->get_vertex_colors();
+        mve::core::TriangleMesh::ColorList & vcolors = mesh->get_vertex_colors();
         vcolors.reserve(vertices.size());
         for (auto & vert : vertices)
         {
-            math::Vec4f vcolor(this->color->at(vert[0], vert[1], 0),
+            mve::math::Vec4f vcolor(this->color->at(vert[0], vert[1], 0),
                 0.0f, 0.0f, 255.0f);
             if (this->color->channels() >= 3)
             {
@@ -143,17 +143,17 @@ DepthTriangulator::approximate_triangulation (int max_vertices,
     /* Project vertices along viewing ray */
     for (auto & vert : vertices)
     {
-        math::Vec3f ray = invproj * math::Vec3f(vert[0] + 0.5f,
+        mve::math::Vec3f ray = invproj * mve::math::Vec3f(vert[0] + 0.5f,
             vert[1] + 0.5f, 1.0f);
         vert = ray.normalized() * vert[2];
     }
     /* Transform into world coordinates */
-    math::Matrix4f ctw;
+    mve::math::Matrix4f ctw;
     this->camera.fill_cam_to_world(*ctw);
-    mve::geom::mesh_transform(mesh, ctw);
+    mve::core::geom::mesh_transform(mesh, ctw);
 
     /* Remove bad faces */
-    mve::TriangleMesh::FaceList & faces = mesh->get_faces();
+    mve::core::TriangleMesh::FaceList & faces = mesh->get_faces();
     for (std::size_t f = 0; f < faces.size(); f += 3)
     {
         float edge1 = (vertices[faces[f]] - vertices[faces[f + 1]]).norm();
@@ -166,7 +166,7 @@ DepthTriangulator::approximate_triangulation (int max_vertices,
             faces[f] = faces[f + 1] = faces[f + 2] =  0;
     }
     mesh->delete_invalid_faces();
-    mve::geom::mesh_delete_unreferenced(mesh);
+    mve::core::geom::mesh_delete_unreferenced(mesh);
 
     mesh->recalc_normals();
     return mesh;
@@ -176,15 +176,15 @@ namespace
 {
     struct Plane
     {
-        Plane (math::Vec3d p1, math::Vec3d p2, math::Vec3d p3)
+        Plane (mve::math::Vec3d p1, mve::math::Vec3d p2, mve::math::Vec3d p3)
         {
-            math::Vec3d normal = (p2 - p1).cross(p3 - p1).normalized();
+            mve::math::Vec3d normal = (p2 - p1).cross(p3 - p1).normalized();
             a = normal[0];
             b = normal[1];
             c = normal[2];
             d = -(p1.dot(normal));
         }
-        double distance_to_point (math::Vec3d p)
+        double distance_to_point (mve::math::Vec3d p)
         {
             return std::fabs(a * p[0] + b * p[1] + c * p[2] + d);
         }
@@ -196,11 +196,11 @@ void
 DepthTriangulator::scan_triangle (std::size_t id)
 {
     Triangle & triangle = this->triangles[id];
-    std::vector<math::Vec2i> pixels;
+    std::vector<mve::math::Vec2i> pixels;
     pixels_for_triangle(triangle.v1, triangle.v2, triangle.v3, &pixels);
 
     double max_dist = 0;
-    math::Vec3d max_dist_point(0.0, 0.0, 0.0);
+    mve::math::Vec3d max_dist_point(0.0, 0.0, 0.0);
     triangle.num_zero_depths = 0;
     Plane plane(triangle.v1, triangle.v2, triangle.v3);
     for (auto const& pixel : pixels)
@@ -214,7 +214,7 @@ DepthTriangulator::scan_triangle (std::size_t id)
             continue;
         }
 
-        math::Vec3d point(pixel[0], pixel[1],
+        mve::math::Vec3d point(pixel[0], pixel[1],
             this->depth_map->at(pixel[0], pixel[1], 0));
         double distance = plane.distance_to_point(point);
         if (distance > max_dist)
@@ -229,9 +229,9 @@ DepthTriangulator::scan_triangle (std::size_t id)
 }
 
 void
-pixels_for_bottom_flat_triangle (math::Vec3d const& a,
-    math::Vec3d const& b, math::Vec3d const& c,
-    std::vector<math::Vec2i> * pixels)
+pixels_for_bottom_flat_triangle (mve::math::Vec3d const& a,
+    mve::math::Vec3d const& b, mve::math::Vec3d const& c,
+    std::vector<mve::math::Vec2i> * pixels)
 {
     double dx_1 = (c[0] - a[0]) / (c[1] - a[1]);
     double dx_2 = (c[0] - b[0]) / (c[1] - b[1]);
@@ -251,9 +251,9 @@ pixels_for_bottom_flat_triangle (math::Vec3d const& a,
 }
 
 void
-pixels_for_top_flat_triangle (math::Vec3d const& a,
-    math::Vec3d const& b, math::Vec3d const& c,
-    std::vector<math::Vec2i> * pixels)
+pixels_for_top_flat_triangle (mve::math::Vec3d const& a,
+    mve::math::Vec3d const& b, mve::math::Vec3d const& c,
+    std::vector<mve::math::Vec2i> * pixels)
 {
     double dx_1 = (a[0] - c[0]) / (a[1] - c[1]);
     double dx_2 = (a[0] - b[0]) / (a[1] - b[1]);
@@ -273,15 +273,15 @@ pixels_for_top_flat_triangle (math::Vec3d const& a,
 }
 
 void
-DepthTriangulator::pixels_for_triangle (math::Vec3d const& a,
-    math::Vec3d const& b, math::Vec3d const& c,
-    std::vector<math::Vec2i> * pixels)
+DepthTriangulator::pixels_for_triangle (mve::math::Vec3d const& a,
+    mve::math::Vec3d const& b, mve::math::Vec3d const& c,
+    std::vector<mve::math::Vec2i> * pixels)
 {
-    std::vector<math::Vec3d> verts;
+    std::vector<mve::math::Vec3d> verts;
     verts.push_back(a);
     verts.push_back(b);
     verts.push_back(c);
-    std::sort(verts.begin(), verts.end(), [](math::Vec3d a, math::Vec3d b) {
+    std::sort(verts.begin(), verts.end(), [](mve::math::Vec3d a, mve::math::Vec3d b) {
         return a[1] < b[1];});
     pixels->reserve(MATH_POW2(verts[2][1] - verts[1][1]) / 2);
 
@@ -291,7 +291,7 @@ DepthTriangulator::pixels_for_triangle (math::Vec3d const& a,
         pixels_for_bottom_flat_triangle(verts[0], verts[1], verts[2], pixels);
     else
     {
-        math::Vec3d v(verts[0][0] + ((verts[1][1] - verts[0][1])
+        mve::math::Vec3d v(verts[0][0] + ((verts[1][1] - verts[0][1])
             / (verts[2][1] - verts[0][1])) * (verts[2][0] - verts[0][0]),
             verts[1][1], 0.0);
         if (verts[0][0] < verts[1][0])
@@ -304,4 +304,4 @@ DepthTriangulator::pixels_for_triangle (math::Vec3d const& a,
 
 }
 
-SMVS_NAMESPACE_END
+} // namespace smvs

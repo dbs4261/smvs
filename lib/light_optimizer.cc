@@ -7,12 +7,12 @@
  * of the BSD 3-Clause license. See the LICENSE.txt file for details.
  */
 
-#include "math/matrix_svd.h"
+#include "mve/math/matrix_svd.h"
 
 #include "light_optimizer.h"
 #include "spherical_harmonics.h"
 
-SMVS_NAMESPACE_BEGIN
+namespace smvs {
 
 LightOptimizer::LightOptimizer (Surface::Ptr surface, StereoView::Ptr view)
     : surface(surface), view(view)
@@ -20,18 +20,18 @@ LightOptimizer::LightOptimizer (Surface::Ptr surface, StereoView::Ptr view)
 }
 
 GlobalLighting::Ptr
-LightOptimizer::fit_lighting_to_image (mve::FloatImage::ConstPtr image)
+LightOptimizer::fit_lighting_to_image (mve::core::FloatImage::ConstPtr image)
 {
-    math::Vector<double, 16> b;
+    mve::math::Vector<double, 16> b;
     b.fill(0.0);
-    math::Matrix<double, 16, 16> A;
+    mve::math::Matrix<double, 16, 16> A;
     A.fill(0.0);
 
-    mve::FloatImage::Ptr normals = this->surface->get_normal_map(
+    mve::core::FloatImage::Ptr normals = this->surface->get_normal_map(
         this->view->get_inverse_flen());
     for (int p = 0; p < normals->get_pixel_amount(); ++p)
     {
-        math::Vec3d normal(normals->at(p, 0), normals->at(p, 1),
+        mve::math::Vec3d normal(normals->at(p, 0), normals->at(p, 1),
             normals->at(p, 2));
         if (std::fabs(normal.norm() - 1.0) > 1e-6
             || image->at(p) < 0.05f)
@@ -47,11 +47,11 @@ LightOptimizer::fit_lighting_to_image (mve::FloatImage::ConstPtr image)
                 A(j,i) += sh[i] * sh[j];
         }
     }
-    math::Matrix<double, 16, 16> A_inv;
-    math::matrix_pseudo_inverse(A, &A_inv);
+    mve::math::Matrix<double, 16, 16> A_inv;
+    mve::math::matrix_pseudo_inverse(A, &A_inv);
     GlobalLighting::Params lighting_params = A_inv * b;
     
     return GlobalLighting::create(lighting_params);
 }
 
-SMVS_NAMESPACE_END
+} // namespace smvs

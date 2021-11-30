@@ -7,13 +7,13 @@
  * of the BSD 3-Clause license. See the LICENSE.txt file for details.
  */
 
-#include "math/matrix.h"
-#include "math/matrix_svd.h"
+#include "mve/math/matrix.h"
+#include "mve/math/matrix_svd.h"
 
 #include "bicubic_patch.h"
 #include "ldl_decomposition.h"
 
-SMVS_NAMESPACE_BEGIN
+namespace smvs {
 
 namespace
 {
@@ -56,9 +56,9 @@ namespace
 void
 BicubicPatch::compute_coefficients (void)
 {
-    math::Matrix<double, 16, 16> A(coefficient_matrix);
+    mve::math::Matrix<double, 16, 16> A(coefficient_matrix);
 
-    math::Vector<double, 16> x;
+    mve::math::Vector<double, 16> x;
     x[0]  = this->n00->f;
     x[1]  = this->n10->f;
     x[2]  = this->n01->f;
@@ -79,7 +79,7 @@ BicubicPatch::compute_coefficients (void)
     x[14] = this->n01->dxy;
     x[15] = this->n11->dxy;
 
-    math::Vector<double, 16> a = A * x;
+    mve::math::Vector<double, 16> a = A * x;
     for (int k = 0, j = 0; j < 4; ++j)
         for (int i = 0; i < 4; ++i, ++k)
             this->coeffs[i][j] = a[k];
@@ -88,14 +88,14 @@ BicubicPatch::compute_coefficients (void)
 void
 BicubicPatch::compute_coefficients_sanity_check (void)
 {
-    math::Matrix4d L, R;
+    mve::math::Matrix4d L, R;
     L[0]  =  1.0; L[1]  =  0.0; L[2]  =  0.0; L[3]  =  0.0;
     L[4]  =  0.0; L[5]  =  0.0; L[6]  =  1.0; L[7]  =  0.0;
     L[8]  = -3.0; L[9]  =  3.0; L[10] = -2.0; L[11] = -1.0;
     L[12] =  2.0; L[13] = -2.0; L[14] =  1.0; L[15] =  1.0;
     R = L.transposed();
 
-    math::Matrix4d F;
+    mve::math::Matrix4d F;
     F[0]  = this->n00->f;
     F[1]  = this->n01->f;
     F[2]  = this->n00->dy;
@@ -113,7 +113,7 @@ BicubicPatch::compute_coefficients_sanity_check (void)
     F[14] = this->n10->dxy;
     F[15] = this->n11->dxy;
 
-    math::Matrix4d A;
+    mve::math::Matrix4d A;
     A = L * F * R;
     std::copy(A.begin(), A.end(), this->coeffs[0]);
 }
@@ -367,19 +367,19 @@ BicubicPatch::fit_to_data(double const* x, double const* y,
 
         rhs[i] = data[i];
     }
-    math::Matrix<double, 16, 16> AtA;
+    mve::math::Matrix<double, 16, 16> AtA;
     std::vector<double> At = A;
-    math::matrix_transpose(&At[0], size, 16);
-    math::matrix_multiply(&At[0], 16, size, &A[0], 16, &AtA[0]);
+    mve::math::matrix_transpose(&At[0], size, 16);
+    mve::math::matrix_multiply(&At[0], 16, size, &A[0], 16, &AtA[0]);
     ldl_inverse(&AtA[0], 16);
 
     std::vector<double> Atrhs(16);
-    math::matrix_multiply(&At[0], 16, size, &rhs[0], 1, &Atrhs[0]);
+    mve::math::matrix_multiply(&At[0], 16, size, &rhs[0], 1, &Atrhs[0]);
 
     std::vector<double> alpha(16);
-    math::matrix_multiply(&AtA[0], 16, 16, &Atrhs[0], 1, &alpha[0]);
+    mve::math::matrix_multiply(&AtA[0], 16, 16, &Atrhs[0], 1, &alpha[0]);
 
     return Ptr(new BicubicPatch(&alpha[0]));
 }
 
-SMVS_NAMESPACE_END
+} // namespace smvs

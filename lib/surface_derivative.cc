@@ -7,18 +7,19 @@
  * of the BSD 3-Clause license. See the LICENSE.txt file for details.
  */
 
-#include "math/vector.h"
+#include "mve/math/defines.h"
+#include "mve/math/vector.h"
 
 #include "surface_derivative.h"
 
-SMVS_NAMESPACE_BEGIN
-SURFACE_DERIVATIVE_NAMESPACE_BEGIN
+namespace smvs {
+namespace surfderiv {
 
 void
 fill_normal(double x, double y, double inv_flen, double w,
     double dx, double dy, double * n)
 {
-    math::Vec3d normal;
+    mve::math::Vec3d normal;
     normal[0] = dx;
     normal[1] = -dy;
     normal[2] = x * dx + y * dy + w;
@@ -237,5 +238,5 @@ mean_curvature_derivative (double const* d_node, double dx,
     }
 }
 
-SURFACE_DERIVATIVE_NAMESPACE_END
-SMVS_NAMESPACE_END
+} // namespace surfderiv
+} // namespace smvs

@@ -15,7 +15,7 @@
 
 #include "defines.h"
 
-SMVS_NAMESPACE_BEGIN
+namespace smvs {
 
 class BicubicPatch
 {
@@ -121,6 +121,6 @@ BicubicPatch::BicubicPatch (double const* coefficients)
     std::copy(coefficients, coefficients + 16, this->coeffs[0]);
 }
 
-SMVS_NAMESPACE_END
+} // namespace smvs
 
 #endif /* SMVS_BICUBIC_PATCH_HEADER */

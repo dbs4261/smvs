@@ -7,22 +7,25 @@
  * of the BSD 3-Clause license. See the LICENSE.txt file for details.
  */
 
+#include "gauss_newton_step.h"
+
 #include <smmintrin.h> // SSE4_1
 
-#include "gauss_newton_step.h"
+#include "mve/math/defines.h"
+
 #include "surface_derivative.h"
 #include "conjugate_gradient.h"
 
 // minimal value for reweighting linear system to optimize L1 norm
 #define R_FACTOR 1e-4
 
-SMVS_NAMESPACE_BEGIN
+namespace smvs {
 
 GaussNewtonStep::GaussNewtonStep (Options const& opts,
         StereoView::ConstPtr main_view,
         std::vector<StereoView::Ptr> const& sub_views,
-        std::vector<math::Matrix3d> const& Mi,
-        std::vector<math::Vec3d> const& ti)
+        std::vector<mve::math::Matrix3d> const& Mi,
+        std::vector<mve::math::Vec3d> const& ti)
     : opts(opts), main_view(main_view), sub_views(sub_views)
     , Mi(Mi), ti(ti)
 {
@@ -175,9 +178,9 @@ GaussNewtonStep::jacobian_entries_for_patch(int const scale,
         for (std::size_t j = 0; j < patch_neighbors.size(); ++j)
         {
             std::size_t sub_id = patch_neighbors[j];
-            mve::FloatImage::ConstPtr sub_gradients =
+            mve::core::FloatImage::ConstPtr sub_gradients =
                 this->sub_views[sub_id]->get_image_gradients();
-            mve::FloatImage::ConstPtr sub_hessian =
+            mve::core::FloatImage::ConstPtr sub_hessian =
                 this->sub_views[sub_id]->get_image_hessian();
 
             C.update(this->Mi[sub_id], this->ti[sub_id],
@@ -418,7 +421,7 @@ GaussNewtonStep::fill_gradient_and_hessian_entries(std::size_t i,
     }
 
     /* shading based energy term */
-    math::Vec3d normal;
+    mve::math::Vec3d normal;
     double x = pixels[i][0] + 0.5 -
         static_cast<double>(this->main_view->get_width()) / 2.0;
     double y = pixels[i][1] + 0.5 -
@@ -431,7 +434,7 @@ GaussNewtonStep::fill_gradient_and_hessian_entries(std::size_t i,
     sh::derivative_4_band(*normal, sh_deriv);
 
     double shading = this->lighting->value_for_normal(normal);
-    math::Vec2d linear_image_grad;
+    mve::math::Vec2d linear_image_grad;
     linear_image_grad[0] = this->main_gradients_linear->at(
         pixels[i][0], pixels[i][1], 0);
     linear_image_grad[1] = this->main_gradients_linear->at(
@@ -447,7 +450,7 @@ GaussNewtonStep::fill_gradient_and_hessian_entries(std::size_t i,
     if(MATH_POW2(shading) < 1e-10 || MATH_POW2(linear_image_value) < 1e-10)
         return;
 
-    math::Vec2d shading_grad(0.0, 0.0);
+    mve::math::Vec2d shading_grad(0.0, 0.0);
     for (int l = 1; l < 16; ++l) // sh0 is constant
     {
         shading_grad[0] += lightparams[l] * (
@@ -460,10 +463,10 @@ GaussNewtonStep::fill_gradient_and_hessian_entries(std::size_t i,
             sh_deriv[l * 3 + 2] * full_surface_div[5]);
     }
 
-    math::Vec2d render_grad = shading_grad / shading;
+    mve::math::Vec2d render_grad = shading_grad / shading;
 
     linear_image_grad *= 1.0 / linear_image_value;
-    math::Vec2d shading_error = render_grad - linear_image_grad;
+    mve::math::Vec2d shading_error = render_grad - linear_image_grad;
 
     double shading_deriv[16];
     for (int col = 0; col < 16; ++col)
@@ -477,7 +480,7 @@ GaussNewtonStep::fill_gradient_and_hessian_entries(std::size_t i,
                 sh_deriv[l * 3 + 2] * normal_deriv[32 + col]);
         }
     }
-    math::Vec2d shading_grad_deriv[16];
+    mve::math::Vec2d shading_grad_deriv[16];
     for (int col = 0; col < 16; ++col)
     {
         shading_grad_deriv[col].fill(0.0);
@@ -493,7 +496,7 @@ GaussNewtonStep::fill_gradient_and_hessian_entries(std::size_t i,
                 sh_deriv[l * 3 + 2] * full_surface_div_deriv[16 * 5 + col]);
         }
     }
-    math::Vec2d render_deriv[16];
+    mve::math::Vec2d render_deriv[16];
     for (int col = 0; col < 16; ++col)
         render_deriv[col] = (shading_grad_deriv[col] * shading - shading_grad *
             shading_deriv[col]) / MATH_POW2(shading);
@@ -517,4 +520,4 @@ GaussNewtonStep::fill_gradient_and_hessian_entries(std::size_t i,
     return;
 }
 
-SMVS_NAMESPACE_END
+} // namespace smvs

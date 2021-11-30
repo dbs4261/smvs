@@ -12,15 +12,15 @@
 
 #include <vector>
 
-#include "core/bundle.h"
-#include "core/view.h"
+#include "mve/core/bundle.h"
+#include "mve/core/view.h"
 
 #include "bicubic_patch.h"
 #include "surface_patch.h"
 #include "stereo_view.h"
 #include "defines.h"
 
-SMVS_NAMESPACE_BEGIN
+namespace smvs {
 
 class Surface
 {
@@ -33,14 +33,14 @@ public:
 
 
 public:
-    static Ptr create(mve::Bundle::ConstPtr bundle, StereoView::Ptr main_view,
-        int scale, mve::FloatImage::ConstPtr init_depth = nullptr);
+    static Ptr create(mve::core::Bundle::ConstPtr bundle, StereoView::Ptr main_view,
+        int scale, mve::core::FloatImage::ConstPtr init_depth = nullptr);
 
     static Ptr create_planar(double depth, int width, int height, int scale);
 
     /* Get Data */
-    mve::FloatImage::Ptr get_depth_map (void);
-    mve::FloatImage::Ptr get_normal_map (float inv_flen);
+    mve::core::FloatImage::Ptr get_depth_map (void);
+    mve::core::FloatImage::Ptr get_normal_map (float inv_flen);
     int get_scale (void) const;
     PatchList const& get_patches (void) const;
     NodeList const& get_nodes (void) const;
@@ -52,11 +52,11 @@ public:
     void subdivide_patches (void);
     void update_nodes(std::vector<double> const& delta,
         std::vector<double> * depth_updates);
-    void fill_patches_from_bundle(mve::Bundle::ConstPtr bundle,
-        mve::CameraInfo const& cam, int view_id);
+    void fill_patches_from_bundle(mve::core::Bundle::ConstPtr bundle,
+        mve::core::CameraInfo const& cam, int view_id);
     void fill_patches_from_depth (void);
 
-    void fill_node_coords(std::vector<math::Vec2d> * coords);
+    void fill_node_coords(std::vector<mve::math::Vec2d> * coords);
     void fill_node_ids_for_patch (std::size_t patch_id,
         std::size_t * node_ids);
     void fill_node_ids_for_patch (std::size_t idx, std::size_t idy,
@@ -79,16 +79,16 @@ public:
     void remove_nodes_without_patch (void);
 
 private:
-    Surface (mve::Bundle::ConstPtr bundle, int view_id,
-        mve::CameraInfo const& cam, int width, int height, int scale);
+    Surface (mve::core::Bundle::ConstPtr bundle, int view_id,
+        mve::core::CameraInfo const& cam, int width, int height, int scale);
 
     Surface (double depth, int width, int height, int scale);
 
-    Surface (mve::Bundle::ConstPtr bundle, StereoView::Ptr main_view,
-        int scale, mve::FloatImage::ConstPtr init_depth);
+    Surface (mve::core::Bundle::ConstPtr bundle, StereoView::Ptr main_view,
+        int scale, mve::core::FloatImage::ConstPtr init_depth);
 
-    void initialize_depth_from_bundle(mve::Bundle::ConstPtr bundle,
-        mve::CameraInfo const& cam, int view_id);
+    void initialize_depth_from_bundle(mve::core::Bundle::ConstPtr bundle,
+        mve::core::CameraInfo const& cam, int view_id);
 
     int fill_holes (void);
 
@@ -104,8 +104,8 @@ private:
     void create_patch_with_nodes (std::size_t idx, std::size_t idy);
 
 private:
-    mve::FloatImage::Ptr depth;
-    mve::FloatImage::Ptr return_depth;
+    mve::core::FloatImage::Ptr depth;
+    mve::core::FloatImage::Ptr return_depth;
     int const pixel_width;
     int const pixel_height;
     int pixel_start_x;
@@ -124,8 +124,8 @@ private:
 
 inline
 Surface::Ptr
-Surface::create(mve::Bundle::ConstPtr bundle, StereoView::Ptr main_view,
-    int scale, mve::FloatImage::ConstPtr init_depth)
+Surface::create(mve::core::Bundle::ConstPtr bundle, StereoView::Ptr main_view,
+    int scale, mve::core::FloatImage::ConstPtr init_depth)
 {
     return Ptr(new Surface(bundle, main_view, scale, init_depth));
 }
@@ -201,6 +201,6 @@ Surface::get_node_id (std::size_t idx, std::size_t idy)
     return idy * this->node_stride + idx;
 }
 
-SMVS_NAMESPACE_END
+} // namespace smvs
 
 #endif /* SMVS_SURFACE_HEADER */

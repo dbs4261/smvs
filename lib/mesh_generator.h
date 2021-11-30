@@ -10,12 +10,12 @@
 #ifndef SMVS_MESH_GENERATOR_HEADER
 #define SMVS_MESH_GENERATOR_HEADER
 
-#include "core/scene.h"
+#include "mve/core/scene.h"
 
 #include "defines.h"
 #include "thread_pool.h"
 
-SMVS_NAMESPACE_BEGIN
+namespace smvs {
 
 class MeshGenerator
 {
@@ -36,30 +36,30 @@ public:
 public:
     MeshGenerator (Options const& opts);
     
-    mve::TriangleMesh::Ptr generate_mesh (mve::Scene::ViewList const& views,
+    mve::core::TriangleMesh::Ptr generate_mesh (mve::core::Scene::ViewList const& views,
         std::string const& image_name, std::string const& dm_name);
 
 private:
-    void cut_depth_maps (std::vector<mve::FloatImage::Ptr> * depthmaps,
-        std::vector<mve::FloatImage::Ptr> * normalmaps);
+    void cut_depth_maps (std::vector<mve::core::FloatImage::Ptr> * depthmaps,
+        std::vector<mve::core::FloatImage::Ptr> * normalmaps);
 
 private:
     struct ViewProjection
     {
-        ViewProjection (mve::CameraInfo const& camera, int width, int height);
+        ViewProjection (mve::core::CameraInfo const& camera, int width, int height);
 
-        math::Vec3f get_proj(math::Vec3f pos) const;
-        float get_surface_power(math::Vec3f const& pos,
-            math::Vec3f const& normal);
+        mve::math::Vec3f get_proj(mve::math::Vec3f pos) const;
+        float get_surface_power(mve::math::Vec3f const& pos,
+            mve::math::Vec3f const& normal);
 
-        math::Matrix3f KR;
-        math::Vec3f t;
+        mve::math::Matrix3f KR;
+        mve::math::Vec3f t;
     };
 
     Options const& opts;
 
     ThreadPool thread_pool;
-    std::vector<mve::View::Ptr> views;
+    std::vector<mve::core::View::Ptr> views;
     std::vector<ViewProjection> view_projs;
 };
 
@@ -70,6 +70,6 @@ MeshGenerator::MeshGenerator (MeshGenerator::Options const& opts)
 {
 }
 
-SMVS_NAMESPACE_END
+} // namespace smvs
 
 #endif /* SMVS_MESH_GENERATOR_HEADER */

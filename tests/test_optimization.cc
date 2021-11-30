@@ -24,20 +24,20 @@ int main (int argc, char** argv)
     /* initialize scene */
     std::string base = "/tmp/testscene";
     std::string base_views = "/tmp/testscene/views";
-    util::fs::mkdir(base.c_str());
-    util::fs::mkdir(base_views.c_str());
+    mve::util::fs::mkdir(base.c_str());
+    mve::util::fs::mkdir(base_views.c_str());
 
-    mve::Scene::Ptr scene = mve::Scene::create("/tmp/testscene");
+    mve::core::Scene::Ptr scene = mve::core::Scene::create("/tmp/testscene");
 
-    mve::View::Ptr view0 = mve::View::create();
+    mve::core::View::Ptr view0 = mve::core::View::create();
     view0->set_id(0);
     view0->set_name("000");
-    mve::View::Ptr view1 = mve::View::create();
+    mve::core::View::Ptr view1 = mve::core::View::create();
     view1->set_id(1);
     view1->set_name("001");
 
 
-    mve::Scene::ViewList & views = scene->get_views();
+    mve::core::Scene::ViewList & views = scene->get_views();
     views.push_back(view0);
     views.push_back(view1);
 
@@ -49,12 +49,12 @@ int main (int argc, char** argv)
 //    float rot1[9] = {1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0};
     float trans1[9] = {0.3, 0.0, 0.0};
 
-    mve::CameraInfo cam0;
+    mve::core::CameraInfo cam0;
     cam0.flen = 1.0;
     std::copy(rot0, rot0 + 9, cam0.rot);
     std::copy(trans0, trans0 + 3, cam0.trans);
 
-    mve::CameraInfo cam1;
+    mve::core::CameraInfo cam1;
     cam1.flen = 1.0;
     std::copy(rot1, rot1 + 9, cam1.rot);
     std::copy(trans1, trans1 + 3, cam1.trans);
@@ -65,8 +65,8 @@ int main (int argc, char** argv)
     int dim = 460;
     int gridsize = 15;
 
-    mve::ByteImage::Ptr image0 = mve::ByteImage::create(dim, dim, 1);
-    mve::ByteImage::Ptr image1 = mve::ByteImage::create(dim, dim, 1);
+    mve::core::ByteImage::Ptr image0 = mve::core::ByteImage::create(dim, dim, 1);
+    mve::core::ByteImage::Ptr image1 = mve::core::ByteImage::create(dim, dim, 1);
     image0->fill(80);
     image1->fill(100);
     for (int i = 0; i < dim; ++i)
@@ -75,21 +75,21 @@ int main (int argc, char** argv)
                    image0->at(i, j, 0) = 120;
     view0->set_image(image0, "undistorted");
 
-    mve::FloatImage::Ptr depth0 = mve::FloatImage::create(dim, dim, 1);
-    mve::FloatImage::Ptr depth1 = mve::FloatImage::create(dim, dim, 1);
+    mve::core::FloatImage::Ptr depth0 = mve::core::FloatImage::create(dim, dim, 1);
+    mve::core::FloatImage::Ptr depth1 = mve::core::FloatImage::create(dim, dim, 1);
     for (int i = 0; i < dim; ++i)
         for (int j = 0; j < dim; ++j)
                 depth1->at(i, j, 0) = 5.0 + 0.005 * i + 0.005 * j;
 
-    math::Matrix3f mat;
-    math::Vec3f vec;
+    mve::math::Matrix3f mat;
+    mve::math::Vec3f vec;
     cam1.fill_reprojection(cam0, dim, dim, dim, dim, *mat, *vec);
 
     for (int i = 0; i < dim; ++i)
         for (int j = 0; j < dim; ++j)
         {
-            math::Vec3f orig((float)i + 0.5, (float)j + 0.5, 1.0);
-            math::Vec3f proj = mat * orig * depth1->at(i, j, 0) + vec;
+            mve::math::Vec3f orig((float)i + 0.5, (float)j + 0.5, 1.0);
+            mve::math::Vec3f proj = mat * orig * depth1->at(i, j, 0) + vec;
             proj[0] /= proj[2];
             proj[1] /= proj[2];
             proj[0] -= 0.5;
@@ -105,18 +105,18 @@ int main (int argc, char** argv)
     view1->set_image(image1, "undistorted");
 
 
-    math::Matrix3f inv;
+    mve::math::Matrix3f inv;
 
     cam0.fill_inverse_calibration(*inv, dim, dim);
-    mve::image::depthmap_convert_conventions<float>(depth0, inv, true);
+    mve::core::image::depthmap_convert_conventions<float>(depth0, inv, true);
     view0->set_image(depth0, "depth-L0");
 
     cam1.fill_inverse_calibration(*inv, dim, dim);
-    mve::image::depthmap_convert_conventions<float>(depth1, inv, true);
+    mve::core::image::depthmap_convert_conventions<float>(depth1, inv, true);
     view1->set_image(depth1, "depth-L0");
 
-    view0->save_view_as(util::fs::join_path(base_views, "view_0000.mve"));
-    view1->save_view_as(util::fs::join_path(base_views, "view_0001.mve"));
+    view0->save_view_as(mve::util::fs::join_path(base_views, "view_0000.mve"));
+    view1->save_view_as(mve::util::fs::join_path(base_views, "view_0001.mve"));
 
     int scale = 5;
 
@@ -136,7 +136,7 @@ int main (int argc, char** argv)
     DepthOptimizer optimizer(main_view, neighbors, surface, do_opts);
 
     view0->set_image(optimizer.get_depth(), "smvs-initial");
-    util::WallTimer timer;
+    mve::util::WallTimer timer;
     optimizer.optimize();
     std::cout << "Optimization took: " << timer.get_elapsed_sec() << "sec"
         << std::endl;

@@ -177,7 +177,7 @@ TEST(MeanCurvatureTest, Derivatives)
 
 void
 compare_normal_derivative (double delta,
-    BicubicPatch::ConstPtr patch_2, math::Vec3d const& base_normal, int id,
+    BicubicPatch::ConstPtr patch_2, mve::math::Vec3d const& base_normal, int id,
     double * analytic)
 {
     double p_x = 0.7;
@@ -192,10 +192,10 @@ compare_normal_derivative (double delta,
     double dx_2 = patch_2->evaluate_dx(p_x, p_y) * patch_to_pixel;
     double dy_2 = patch_2->evaluate_dy(p_x, p_y) * patch_to_pixel;
 
-    math::Vec3d normal_2;
+    mve::math::Vec3d normal_2;
     surfderiv::fill_normal(x, y, inv_f, w_2, dx_2, dy_2, *normal_2);
 
-    math::Vec3d numeric_deriv = (normal_2 - base_normal);
+    mve::math::Vec3d numeric_deriv = (normal_2 - base_normal);
     numeric_deriv /= delta;
 
     EXPECT_NEAR(analytic[0 + id], numeric_deriv[0], 1e-5);
@@ -246,7 +246,7 @@ TEST(NormalDerivativeTest, Values)
     double dx_1 = patch_1->evaluate_dx(p_x, p_y) * patch_to_pixel;
     double dy_1 = patch_1->evaluate_dy(p_x, p_y) * patch_to_pixel;
 
-    math::Vec3d base_normal;
+    mve::math::Vec3d base_normal;
     surfderiv::fill_normal(x, y, inv_f, w_1, dx_1, dy_1, *base_normal);
 
     double analytic_full_deriv[48];
@@ -423,11 +423,11 @@ TEST(NormalDivergenceTest, Values)
     surfderiv::normal_divergence(x, y, f, w_1, dx_1, dy_1,
         dxy_1, dxx_1, dyy_1, analytic_full_div);
 
-    math::Vec3d base_normal;
+    mve::math::Vec3d base_normal;
     surfderiv::fill_normal(x, y, inv_f, w_1, dx_1, dy_1, *base_normal);
 
     double backup;
-    math::Vec3d normal_2;
+    mve::math::Vec3d normal_2;
     double w_2;
     double dx_2;
     double dy_2;

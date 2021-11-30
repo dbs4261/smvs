@@ -51,27 +51,27 @@ TEST(CorrespondenceTest, Derivatives)
                     7.05365e-06, -0.000139764, 1.00931};
     double tt[3] = {3.78737, 168.604, 0.0117067};
 
-    math::Matrix3d M(MM);
-    math::Vec3d t(tt);
+    mve::math::Matrix3d M(MM);
+    mve::math::Vec3d t(tt);
 
 
     double const pu  = 100;
     double const pv  = 100;
     Correspondence C(M, t, pu, pv, center_f_1);
 
-    math::Vec2d corr_base;
+    mve::math::Vec2d corr_base;
     C.fill(*corr_base);
 
-    math::Vec2d c_dn00[4];
-    math::Vec2d c_dn10[4];
-    math::Vec2d c_dn01[4];
-    math::Vec2d c_dn11[4];
+    mve::math::Vec2d c_dn00[4];
+    mve::math::Vec2d c_dn10[4];
+    mve::math::Vec2d c_dn01[4];
+    mve::math::Vec2d c_dn11[4];
     C.get_derivative(d_00, d_10, d_01, d_11,
         c_dn00, c_dn10, c_dn01, c_dn11);
 
     Correspondence C_new(M, t, pu, pv, 0.0);
-    math::Vec2d corr_new;
-    math::Vec2d diff;
+    mve::math::Vec2d corr_new;
+    mve::math::Vec2d diff;
 
     double delta = 1e-8;
     double backup;
@@ -260,11 +260,11 @@ TEST(CorrespondenceTest, Derivatives)
 }
 
 
-void compare_jacobian_deriv_grad(math::Matrix2d const& jac_base,
+void compare_jacobian_deriv_grad(mve::math::Matrix2d const& jac_base,
     double const delta, double const epsilon,
-    math::Vec2d const& jac_grad_analytic, math::Vec2d const& grad,
+    mve::math::Vec2d const& jac_grad_analytic, mve::math::Vec2d const& grad,
     BicubicPatch::Ptr deriv_patch,
-    math::Matrix3d const& M, math::Vec3d const& t, double u, double v)
+    mve::math::Matrix3d const& M, mve::math::Vec3d const& t, double u, double v)
 {
     double const patch_to_pixel = 0.8;
     double center_f = deriv_patch->evaluate_f(0.2, 0.8);
@@ -272,11 +272,11 @@ void compare_jacobian_deriv_grad(math::Matrix2d const& jac_base,
     double center_dy = deriv_patch->evaluate_dy(0.2, 0.8) * patch_to_pixel;
 
     Correspondence const C_new(M, t, u, v, center_f, center_dx, center_dy);
-    math::Matrix2d jac_new;
+    mve::math::Matrix2d jac_new;
     C_new.fill_jacobian(*jac_new);
 
-    math::Matrix2d diff = (jac_new - jac_base) / delta;
-    math::Vec2d diff_grad = diff * grad;
+    mve::math::Matrix2d diff = (jac_new - jac_base) / delta;
+    mve::math::Vec2d diff_grad = diff * grad;
 
     EXPECT_NEAR(jac_grad_analytic[0], diff_grad[0], epsilon);
     EXPECT_NEAR(jac_grad_analytic[1], diff_grad[1], epsilon);
@@ -313,27 +313,27 @@ TEST(CorrespondenceJacobianTest, ValuesAndDerivatives)
                     -0.0269324, -1.01116, 174.093,
                     7.05365e-06, -0.000139764, 1.00931};
     double tt[3] = {3.78737, 168.604, 0.0117067};
-    math::Matrix3d M(MM);
-    math::Vec3d t(tt);
+    mve::math::Matrix3d M(MM);
+    mve::math::Vec3d t(tt);
 
     double x = 300 + 0.5;
     double y = 200 + 0.5;
 
     Correspondence const C(M, t, x, y, center_f_1, center_dx_1, center_dy_1);
-    math::Matrix2d jac_base;
+    mve::math::Matrix2d jac_base;
     C.fill_jacobian(*jac_base);
 
-    math::Vec2d corr_base;
+    mve::math::Vec2d corr_base;
     C.fill(*corr_base);
     corr_base[0] -= 0.5;
     corr_base[1] -= 0.5;
 
-    math::Matrix2d corr_jac;
+    mve::math::Matrix2d corr_jac;
     C.fill_jacobian(*corr_jac);
 
     Correspondence C_new(M, t, x, y, 0.0);
-    math::Vec2d diff;
-    math::Vec2d corr_new;
+    mve::math::Vec2d diff;
+    mve::math::Vec2d corr_new;
     double const delta = 1e-8;
     double const epsilon = 1e-5;
     double backup;
@@ -363,16 +363,16 @@ TEST(CorrespondenceJacobianTest, ValuesAndDerivatives)
     y = backup;
 
 #if 1
-    math::Matrix2d j_dn[16];
+    mve::math::Matrix2d j_dn[16];
 
-    math::Vec2d grad(0.2,0.1);
-    math::Vec2d j_dn_grad[16];
+    mve::math::Vec2d grad(0.2,0.1);
+    mve::math::Vec2d j_dn_grad[16];
     C.fill_jacobian_derivative_grad(*grad, d_n, j_dn_grad);
 
-    math::Vec2d * j_dn00_grad = j_dn_grad;
-    math::Vec2d * j_dn10_grad = j_dn_grad + 4;
-    math::Vec2d * j_dn01_grad = j_dn_grad + 8;
-    math::Vec2d * j_dn11_grad = j_dn_grad + 12;
+    mve::math::Vec2d * j_dn00_grad = j_dn_grad;
+    mve::math::Vec2d * j_dn10_grad = j_dn_grad + 4;
+    mve::math::Vec2d * j_dn01_grad = j_dn_grad + 8;
+    mve::math::Vec2d * j_dn11_grad = j_dn_grad + 12;
 
     /* Node 00 */
     backup = n00->f;

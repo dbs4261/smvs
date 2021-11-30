@@ -18,7 +18,7 @@
 using namespace smvs;
 
 void
-debug_print_mesh (mve::TriangleMesh::Ptr mesh)
+debug_print_mesh (mve::core::TriangleMesh::Ptr mesh)
 {
     std::cout << "Vertices: " << std::endl;
     for (auto v : mesh->get_vertices())
@@ -44,18 +44,18 @@ debug_print_mesh (mve::TriangleMesh::Ptr mesh)
 
 TEST(Delaunay2DTest, InitialMesh)
 {
-    math::Vec2d min(0.0, 0.0);
-    math::Vec2d max(1.0, 1.0);
+    mve::math::Vec2d min(0.0, 0.0);
+    mve::math::Vec2d max(1.0, 1.0);
 
     Delaunay2D delaunay(min, max, 0.0);
 
-    mve::TriangleMesh::Ptr mesh = delaunay.get_mesh();
+    mve::core::TriangleMesh::Ptr mesh = delaunay.get_mesh();
 }
 
 TEST(Delaunay2DTest, InsertPoint)
 {
-    math::Vec2d min(-4.0, -4.0);
-    math::Vec2d max(4.0, 4.0);
+    mve::math::Vec2d min(-4.0, -4.0);
+    mve::math::Vec2d max(4.0, 4.0);
 
     double spiral[30]
     {
@@ -68,11 +68,11 @@ TEST(Delaunay2DTest, InsertPoint)
 
     Delaunay2D delaunay(min, max, 0.0);
     for (int i = 0; i < 30; i+= 2)
-        delaunay.insert_point(math::Vec3d(spiral[i], spiral[i+1], 0.0));
+        delaunay.insert_point(mve::math::Vec3d(spiral[i], spiral[i+1], 0.0));
 
-    mve::TriangleMesh::Ptr mesh = delaunay.get_mesh();
-    mve::TriangleMesh::VertexList const& verts = mesh->get_vertices();
-    mve::TriangleMesh::FaceList const& faces = mesh->get_faces();
+    mve::core::TriangleMesh::Ptr mesh = delaunay.get_mesh();
+    mve::core::TriangleMesh::VertexList const& verts = mesh->get_vertices();
+    mve::core::TriangleMesh::FaceList const& faces = mesh->get_faces();
 
     EXPECT_EQ(32, faces.size() / 3);
     double const eps = 1e-6;
@@ -85,16 +85,16 @@ TEST(Delaunay2DTest, InsertPoint)
 
 TEST(DepthTriangulator, PixelsForTriangle)
 {
-    math::Vec3d a(499.0, 499.0, 0.0);
-    math::Vec3d b(499.0, 0.0, 0.0);
-    math::Vec3d c(0.0, 499.0, 0.0);
-    math::Vec3d d(0.0, 0.0, 0.0);
-    math::Vec3d e(999.0, 999.0, 0.0);
-    math::Vec3d f(999.0, 500.0, 0.0);
-    math::Vec3d g(500.0, 999.0, 0.0);
-    math::Vec3d h(500.0, 500.0, 0.0);
+    mve::math::Vec3d a(499.0, 499.0, 0.0);
+    mve::math::Vec3d b(499.0, 0.0, 0.0);
+    mve::math::Vec3d c(0.0, 499.0, 0.0);
+    mve::math::Vec3d d(0.0, 0.0, 0.0);
+    mve::math::Vec3d e(999.0, 999.0, 0.0);
+    mve::math::Vec3d f(999.0, 500.0, 0.0);
+    mve::math::Vec3d g(500.0, 999.0, 0.0);
+    mve::math::Vec3d h(500.0, 500.0, 0.0);
 
-    std::vector<math::Vec2i> pixels;
+    std::vector<mve::math::Vec2i> pixels;
     DepthTriangulator::pixels_for_triangle(a, b, c, &pixels);
     DepthTriangulator::pixels_for_triangle(b, c, d, &pixels);
     DepthTriangulator::pixels_for_triangle(e, f, g, &pixels);
@@ -103,19 +103,19 @@ TEST(DepthTriangulator, PixelsForTriangle)
     EXPECT_EQ(pixels.size(), 1000 * 1000 / 2);
 
     /* debug write */
-//    mve::ByteImage::Ptr image = mve::ByteImage::create(1000, 1000, 1);
+//    mve::core::ByteImage::Ptr image = mve::core::ByteImage::create(1000, 1000, 1);
 //    image->fill(0);
 //    for (auto p : pixels)
 //    {
 //        image->at(p[0], p[1], 0) = 255;
 //    }
-//    mve::image::save_png_file(image, "/tmp/debug.png");
+//    mve::core::image::save_png_file(image, "/tmp/debug.png");
 }
 
 TEST(DepthTriangulator, ApproximateTriangulation)
 {
-    mve::FloatImage::Ptr dm = mve::FloatImage::create(10, 10, 1);
-    mve::CameraInfo cam;
+    mve::core::FloatImage::Ptr dm = mve::core::FloatImage::create(10, 10, 1);
+    mve::core::CameraInfo cam;
     cam.flen = 1;
     cam.trans[2] = -1.0;
     for (int i = 0; i < dm->width(); ++i)
@@ -124,22 +124,22 @@ TEST(DepthTriangulator, ApproximateTriangulation)
                 + MATH_POW2((float)j - 4.5)) / 15.0f + 1.0f;
 
     DepthTriangulator dt(dm, cam);
-    mve::TriangleMesh::Ptr approx = dt.approximate_triangulation(27);
+    mve::core::TriangleMesh::Ptr approx = dt.approximate_triangulation(27);
     EXPECT_EQ(27, approx->get_vertices().size());
     EXPECT_EQ(38, approx->get_faces().size() / 3);
-//    mve::geom::save_mesh(approx, "/tmp/approx.ply");
+//    mve::core::geom::save_mesh(approx, "/tmp/approx.ply");
 }
 
 TEST(DepthTriangulator, ApproximateTriangulationEmpty)
 {
-    mve::FloatImage::Ptr dm = mve::FloatImage::create(10, 10, 1);
+    mve::core::FloatImage::Ptr dm = mve::core::FloatImage::create(10, 10, 1);
     dm->fill(0.0f);
-    mve::CameraInfo cam;
+    mve::core::CameraInfo cam;
     cam.flen = 1;
     cam.trans[2] = -1.0;
 
     DepthTriangulator dt(dm, cam);
-    mve::TriangleMesh::Ptr approx = dt.approximate_triangulation(27);
+    mve::core::TriangleMesh::Ptr approx = dt.approximate_triangulation(27);
     EXPECT_EQ(0, approx->get_vertices().size());
     EXPECT_EQ(0, approx->get_faces().size() / 3);
 }

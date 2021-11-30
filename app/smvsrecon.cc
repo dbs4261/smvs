@@ -13,17 +13,17 @@
 #include <set>
 #include <string>
 
-#include "mve/scene.h"
-#include "mve/view.h"
-#include "mve/image_tools.h"
-#include "mve/mesh_io.h"
-#include "mve/mesh_io_ply.h"
-#include "util/arguments.h"
-#include "util/file_system.h"
-#include "util/strings.h"
-#include "util/tokenizer.h"
-#include "util/system.h"
-#include "util/timer.h"
+#include "mve/core/scene.h"
+#include "mve/core/view.h"
+#include "mve/core/image_tools.h"
+#include "mve/core/mesh_io.h"
+#include "mve/core/mesh_io_ply.h"
+#include "mve/util/arguments.h"
+#include "mve/util/file_system.h"
+#include "mve/util/strings.h"
+#include "mve/util/tokenizer.h"
+#include "mve/util/system.h"
+#include "mve/util/timer.h"
 
 #include "thread_pool.h"
 #include "stereo_view.h"
@@ -64,8 +64,8 @@ struct AppSettings
     bool force_sgm = false;
     bool full_optimization = false;
     bool clean_scene = false;
-    math::Vec3f aabb_min = math::Vec3f(0.0f);
-    math::Vec3f aabb_max = math::Vec3f(0.0f);
+    mve::math::Vec3f aabb_min = mve::math::Vec3f(0.0f);
+    mve::math::Vec3f aabb_max = mve::math::Vec3f(0.0f);
 
     AppSettings (void) {}
 };
@@ -74,7 +74,7 @@ AppSettings
 args_to_settings(int argc, char** argv)
 {
     /* Setup argument parser. */
-    util::Arguments args;
+    mve::util::Arguments args;
     args.set_exit_on_error(true);
     args.set_nonopt_minnum(1);
     args.set_nonopt_maxnum(1);
@@ -143,7 +143,7 @@ args_to_settings(int argc, char** argv)
     conf.scene_dname = args.get_nth_nonopt(0);
 
     /* Scan arguments. */
-    while (util::ArgResult const* arg = args.next_result())
+    while (mve::util::ArgResult const* arg = args.next_result())
     {
         if (arg->opt == NULL)
             continue;
@@ -231,7 +231,7 @@ args_to_settings(int argc, char** argv)
 
     if (conf.sgm_range.size() > 0)
     {
-        util::Tokenizer tok;
+        mve::util::Tokenizer tok;
         tok.split(conf.sgm_range, ',');
         if (tok.size() != 2)
         {
@@ -244,7 +244,7 @@ args_to_settings(int argc, char** argv)
 
     if (conf.aabb_string.size() > 0)
     {
-        util::Tokenizer tok;
+        mve::util::Tokenizer tok;
         tok.split(conf.aabb_string, ',');
         if (tok.size() != 6)
         {
@@ -275,7 +275,7 @@ args_to_settings(int argc, char** argv)
 
 /* -------------------------------------------------------------------------- */
 
-void generate_mesh (AppSettings const& conf, mve::Scene::Ptr scene,
+void generate_mesh (AppSettings const& conf, mve::core::Scene::Ptr scene,
     std::string const& input_name, std::string const& dm_name)
 {
     std::cout << "Generating ";
@@ -286,8 +286,8 @@ void generate_mesh (AppSettings const& conf, mve::Scene::Ptr scene,
     if (conf.cut_surface)
         std::cout << ", Cutting surfaces";
 
-    util::WallTimer timer;
-    mve::Scene::ViewList recon_views;
+    mve::util::WallTimer timer;
+    mve::core::Scene::ViewList recon_views;
     for (int i : conf.view_ids)
         recon_views.push_back(scene->get_views()[i]);
 
@@ -300,7 +300,7 @@ void generate_mesh (AppSettings const& conf, mve::Scene::Ptr scene,
     meshgen_opts.create_triangle_mesh = conf.create_triangle_mesh;
 
     smvs::MeshGenerator meshgen(meshgen_opts);
-    mve::TriangleMesh::Ptr mesh = meshgen.generate_mesh(recon_views,
+    mve::core::TriangleMesh::Ptr mesh = meshgen.generate_mesh(recon_views,
         input_name, dm_name);
 
     if (conf.aabb_string.size() > 0)
@@ -308,7 +308,7 @@ void generate_mesh (AppSettings const& conf, mve::Scene::Ptr scene,
         std::cout << "Clipping to AABB: (" << conf.aabb_min << ") / ("
             << conf.aabb_max << ")" << std::endl;
 
-        mve::TriangleMesh::VertexList const& verts = mesh->get_vertices();
+        mve::core::TriangleMesh::VertexList const& verts = mesh->get_vertices();
         std::vector<bool> aabb_clip(verts.size(), false);
         for (std::size_t v = 0; v < verts.size(); ++v)
             for (int i = 0; i < 3; ++i)
@@ -331,15 +331,15 @@ void generate_mesh (AppSettings const& conf, mve::Scene::Ptr scene,
         meshname += "S";
     else
         meshname += "B";
-    meshname += util::string::get(conf.input_scale) + ".ply";
-    meshname = util::fs::join_path(scene->get_path(), meshname);
+    meshname += mve::util::string::get(conf.input_scale) + ".ply";
+    meshname = mve::util::fs::join_path(scene->get_path(), meshname);
 
     /* Save mesh */
-    mve::geom::SavePLYOptions opts;
+    mve::core::geom::SavePLYOptions opts;
     opts.write_vertex_normals = true;
     opts.write_vertex_values = true;
     opts.write_vertex_confidences = true;
-    mve::geom::save_ply_mesh(mesh, meshname, opts);
+    mve::core::geom::save_ply_mesh(mesh, meshname, opts);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -347,7 +347,7 @@ void generate_mesh (AppSettings const& conf, mve::Scene::Ptr scene,
 void reconstruct_sgm_depth_for_view (AppSettings const& conf,
     smvs::StereoView::Ptr main_view,
     std::vector<smvs::StereoView::Ptr> neighbors,
-    mve::Bundle::ConstPtr bundle = nullptr)
+    mve::core::Bundle::ConstPtr bundle = nullptr)
 {
     smvs::SGMStereo::Options sgm_opts;
     sgm_opts.scale = conf.sgm_scale;
@@ -356,12 +356,12 @@ void reconstruct_sgm_depth_for_view (AppSettings const& conf,
     sgm_opts.min_depth = conf.sgm_min;
     sgm_opts.max_depth = conf.sgm_max;
 
-    util::WallTimer sgm_timer;
-    mve::FloatImage::Ptr d1 = smvs::SGMStereo::reconstruct(sgm_opts, main_view,
+    mve::util::WallTimer sgm_timer;
+    mve::core::FloatImage::Ptr d1 = smvs::SGMStereo::reconstruct(sgm_opts, main_view,
         neighbors[0], bundle);
     if (neighbors.size() > 1)
     {
-        mve::FloatImage::Ptr d2 = smvs::SGMStereo::reconstruct(sgm_opts,
+        mve::core::FloatImage::Ptr d2 = smvs::SGMStereo::reconstruct(sgm_opts,
             main_view, neighbors[1], bundle);
         for (int p = 0; p < d1->get_pixel_amount(); ++p)
         {
@@ -388,8 +388,8 @@ void reconstruct_sgm_depth_for_view (AppSettings const& conf,
 int
 main (int argc, char** argv)
 {
-    util::system::register_segfault_handler();
-    util::system::print_build_timestamp("Shading-aware Multi-view Stereo");
+    mve::util::system::register_segfault_handler();
+    mve::util::system::print_build_timestamp("Shading-aware Multi-view Stereo");
 
     AppSettings conf = args_to_settings(argc, argv);
     std::cout << std::endl;
@@ -397,16 +397,16 @@ main (int argc, char** argv)
     /* Start processing */
 
     /* Load scene */
-    mve::Scene::Ptr scene = mve::Scene::create(conf.scene_dname);
-    mve::Scene::ViewList& views(scene->get_views());
+    mve::core::Scene::Ptr scene = mve::core::Scene::create(conf.scene_dname);
+    mve::core::Scene::ViewList& views(scene->get_views());
 
     /* Check bundle file */
-    mve::Bundle::ConstPtr bundle;
+    mve::core::Bundle::ConstPtr bundle;
     try
     {
         bundle = scene->get_bundle();
     }
-    catch (std::exception e)
+    catch (std::exception& e)
     {
         bundle = nullptr;
         std::cout << "Cannot load bundle file, forcing SGM." << std::endl;
@@ -429,10 +429,10 @@ main (int argc, char** argv)
     /* Update legacy data */
     for (std::size_t i = 0; i < views.size(); ++i)
     {
-        mve::View::Ptr view = views[i];
+        mve::core::View::Ptr view = views[i];
         if (view == nullptr)
             continue;
-        mve::View::ImageProxies proxies = view->get_images();
+        mve::core::View::ImageProxies proxies = view->get_images();
         for (std::size_t p = 0; p < proxies.size(); ++p)
             if (proxies[p].name.compare("lighting-shaded") == 0
                 || proxies[p].name.compare("lighting-sphere") == 0
@@ -442,11 +442,11 @@ main (int argc, char** argv)
         for (std::size_t p = 0; p < proxies.size(); ++p)
             if (proxies[p].name.compare("sgm-depth") == 0)
             {
-                std::string file = util::fs::join_path(
+                std::string file = mve::util::fs::join_path(
                     view->get_directory(), proxies[p].filename);
-                std::string new_file = util::fs::join_path(
+                std::string new_file = mve::util::fs::join_path(
                    view->get_directory(), "smvs-sgm.mvei");
-                util::fs::rename(file.c_str(), new_file.c_str());
+                mve::util::fs::rename(file.c_str(), new_file.c_str());
             }
         view->reload_view();
     }
@@ -457,14 +457,14 @@ main (int argc, char** argv)
             << std::endl;
         for (std::size_t i = 0; i < views.size(); ++i)
         {
-            mve::View::Ptr view = views[i];
+            mve::core::View::Ptr view = views[i];
             if (view == nullptr)
                 continue;
-            mve::View::ImageProxies proxies = view->get_images();
+            mve::core::View::ImageProxies proxies = view->get_images();
             for (std::size_t p = 0; p < proxies.size(); ++p)
             {
                 std::string name = proxies[p].name;
-                std::string left = util::string::left(name, 4);
+                std::string left = mve::util::string::left(name, 4);
                 if (left.compare("smvs") == 0)
                     view->remove_image(name);
             }
@@ -480,11 +480,11 @@ main (int argc, char** argv)
         int view_counter = 0;
         for (std::size_t i = 0; i < views.size(); ++i)
         {
-            mve::View::Ptr view = views[i];
+            mve::core::View::Ptr view = views[i];
             if (view == nullptr || !view->has_image(conf.image_embedding))
                 continue;
 
-            mve::View::ImageProxy const* proxy =
+            mve::core::View::ImageProxy const* proxy =
                 view->get_image_proxy(conf.image_embedding);
             uint32_t size = proxy->width * proxy->height;
             avg_image_size += static_cast<double>(size);
@@ -502,16 +502,16 @@ main (int argc, char** argv)
 
     std::string input_name;
     if (conf.input_scale > 0)
-        input_name = "undist-L" + util::string::get(conf.input_scale);
+        input_name = "undist-L" + mve::util::string::get(conf.input_scale);
     else
         input_name = conf.image_embedding;
     std::cout << "Input embedding: " << input_name << std::endl;
 
     std::string output_name;
     if (conf.use_shading)
-        output_name = "smvs-S" + util::string::get(conf.input_scale);
+        output_name = "smvs-S" + mve::util::string::get(conf.input_scale);
     else
-        output_name = "smvs-B" + util::string::get(conf.input_scale);
+        output_name = "smvs-B" + mve::util::string::get(conf.input_scale);
     std::cout << "Output embedding: " << output_name << std::endl;
 
     /* Clean view id list */
@@ -562,7 +562,7 @@ main (int argc, char** argv)
     view_select_opts.num_neighbors = conf.num_neighbors;
     view_select_opts.embedding = conf.image_embedding;
     smvs::ViewSelection view_selection(view_select_opts, views, bundle);
-    std::vector<mve::Scene::ViewList> view_neighbors(
+    std::vector<mve::core::Scene::ViewList> view_neighbors(
         reconstruction_list.size());
     std::vector<std::future<void>> selection_tasks;
     for (std::size_t v = 0; v < reconstruction_list.size(); ++v)
@@ -578,14 +578,14 @@ main (int argc, char** argv)
     {
         std::cout << "Running view selection for "
             << selection_tasks.size() << " views... " << std::flush;
-        util::WallTimer timer;
+        mve::util::WallTimer timer;
         for(auto && task : selection_tasks) task.get();
         std::cout << " done, took " << timer.get_elapsed_sec()
             << "s." << std::endl;
     }
     std::vector<int> skipped;
     std::vector<int> final_reconstruction_list;
-    std::vector<mve::Scene::ViewList> final_view_neighbors;
+    std::vector<mve::core::Scene::ViewList> final_view_neighbors;
     for (std::size_t v = 0; v < reconstruction_list.size(); ++v)
         if (view_neighbors[v].size() < conf.min_neighbors)
             skipped.push_back(reconstruction_list[v]);
@@ -621,7 +621,7 @@ main (int argc, char** argv)
     std::vector<std::future<void>> resize_tasks;
     for (auto const& i : check_embedding_list)
     {
-        mve::View::Ptr view = views[i];
+        mve::core::View::Ptr view = views[i];
         if (view == nullptr
             || !view->has_image(conf.image_embedding)
             || view->has_image(input_name))
@@ -630,11 +630,11 @@ main (int argc, char** argv)
         resize_tasks.emplace_back(thread_pool.add_task(
             [view, &input_name, &conf]
         {
-            mve::ByteImage::ConstPtr input =
+            mve::core::ByteImage::ConstPtr input =
                 view->get_byte_image(conf.image_embedding);
-            mve::ByteImage::Ptr scld = input->duplicate();
+            mve::core::ByteImage::Ptr scld = input->duplicate();
             for (int i = 0; i < conf.input_scale; ++i)
-                scld = mve::image::rescale_half_size_gaussian<uint8_t>(scld);
+                scld = mve::core::image::rescale_half_size_gaussian<uint8_t>(scld);
             view->set_image(scld, input_name);
             view->save_view();
         }));
@@ -643,7 +643,7 @@ main (int argc, char** argv)
     {
         std::cout << "Resizing input images for "
             << resize_tasks.size() << " views... " << std::flush;
-        util::WallTimer timer;
+        mve::util::WallTimer timer;
         for(auto && task : resize_tasks) task.get();
         std::cout << " done, took " << timer.get_elapsed_sec()
             << "s." << std::endl;
@@ -653,7 +653,7 @@ main (int argc, char** argv)
     std::mutex counter_mutex;
     std::size_t started = 0;
     std::size_t finished = 0;
-    util::WallTimer timer;
+    mve::util::WallTimer timer;
 
     for (std::size_t v = 0; v < reconstruction_list.size(); ++v)
     {
@@ -667,7 +667,7 @@ main (int argc, char** argv)
             smvs::StereoView::Ptr main_view = smvs::StereoView::create(
                 views[i], input_name, conf.use_shading,
                 conf.gamma_correction);
-            mve::Scene::ViewList neighbors = view_neighbors[v];
+            mve::core::Scene::ViewList neighbors = view_neighbors[v];
 
             std::vector<smvs::StereoView::Ptr> stereo_views;
 
